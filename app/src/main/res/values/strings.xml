@@ -1,0 +1,31 @@
+<resources>
+	<string name="app_name">WAAB</string>
+	<string name="r1">Ruta 1</string>
+	<string name="r2">Ruta 2</string>
+	<string name="r3">Ruta 3</string>
+	<string name="r4">Ruta 4</string>
+	<string name="r5">Ruta 5</string>
+	<string name="r6">Ruta 6</string>
+	<string name="r7">Ruta 7</string>
+	<string name="r8">Ruta 8</string>
+	<string name="r9">Ruta 9</string>
+	<string name="r11">Ruta 11</string>
+	<string name="r13">Ruta 13</string>
+	<string name="r14">Ruta 14</string>
+	<string name="r15">Ruta 15</string>
+	<string name="r16">Ruta 16</string>
+	<string name="r17">Ruta 17</string>
+	<string name="rtyl">Ruta Tierra y Libertad</string>
+	<string name="rtdg">Ruta Guadalupe Zacatecas</string>
+	<string name="Registro">Registro</string>
+	<string name="mapa">Ver mapa</string>
+	<string name="title_activity_mapa">Map</string>
+	<string name="title_activity_maps">Map</string>
+	<string name="title_activity_mapas_vista">Map</string>
+	<string name="CabeceraRegistro">¿Estas aquí?</string>
+	<string name="actualizar">Actualizar</string>
+	<string name="confirmar">Confirmar</string>
+	<string name="regresar">Regresar</string>
+	<string name="urlApi">https://127.0.0.1/</string>
+
+</resources>

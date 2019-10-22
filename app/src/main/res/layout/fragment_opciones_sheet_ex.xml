@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+			 xmlns:tools="http://schemas.android.com/tools"
+			 android:layout_width="match_parent"
+			 android:layout_height="match_parent"
+			 tools:context=".opcionesSheetEx">
+	<LinearLayout
+			android:orientation="vertical"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent">
+		<TextView
+				android:text="Elige una opcion"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:id="@+id/textViewFragment"
+				android:textSize="32dp"
+				android:textColor="#32A5A8"/>
+		<TextView
+			android:layout_width="match_parent"
+			android:id="@+id/registroTextView"
+			android:drawableLeft="@drawable/registriomage"
+			android:drawablePadding="10dp"
+			android:text="@string/Registro"
+			android:paddingStart="15dp"
+			android:paddingEnd="15dp"
+			android:textSize="25dp"
+			android:gravity="center_vertical"
+			android:layout_height="wrap_content"
+	/>
+		<TextView
+				android:layout_width="match_parent"
+				android:id="@+id/mapaTextView"
+				android:drawableLeft="@drawable/mapaimage"
+				android:drawablePadding="10dp"
+				android:text="@string/mapa"
+				android:paddingStart="15dp"
+				android:paddingEnd="15dp"
+				android:textSize="25dp"
+				android:gravity="center_vertical"
+				android:layout_height="wrap_content"
+		/>
+	</LinearLayout>
+</FrameLayout>

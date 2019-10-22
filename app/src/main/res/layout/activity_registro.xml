@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+		xmlns:android="http://schemas.android.com/apk/res/android"
+		xmlns:tools="http://schemas.android.com/tools"
+		xmlns:app="http://schemas.android.com/apk/res-auto"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		tools:context=".Registro">
+	<LinearLayout
+			android:orientation="vertical"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent">
+		<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content" android:id="@+id/txt_registro"
+				android:text="@string/CabeceraRegistro" android:textColor="#19607E" android:textSize="22sp"/>
+		<TextView
+				android:text="Direccion:"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content" android:id="@+id/txt_direccion" android:textSize="30sp"
+				android:textStyle="bold" android:textColor="#75AD7D"/>
+		<fragment
+				class="com.google.android.gms.maps.SupportMapFragment"
+				android:id="@+id/map"
+				android:layout_width="match_parent"
+				android:layout_height="233dp"/>
+		<TextView
+				android:text="Coordenadas"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content" android:id="@+id/txt_latlng"/>
+		<TextView
+				android:text="Hora: "
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content" android:id="@+id/txt_hora"/>
+		<Button
+				android:text="@string/actualizar"
+				android:layout_width="match_parent"
+				android:layout_height="65dp" android:id="@+id/btn_actualizar" android:textColor="#000000"
+				android:textColorHint="#CAEEAC" android:background="#C5F3E9"/>
+		<LinearLayout
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent">
+			<Button
+					android:text="@string/confirmar"
+					android:layout_width="match_parent"
+					android:layout_height="78dp" android:id="@+id/btn_confirmar" android:textAlignment="center"
+					android:textColor="#000000" android:gravity="center" android:layout_weight="0.5"
+					android:background="#CFF5AF"/>
+			<Button
+					android:text="@string/regresar"
+					android:layout_width="match_parent"
+					android:layout_height="78dp" android:id="@+id/btn_regresar" android:layout_weight="0.5"
+					android:background="#74FD2929"/>
+		</LinearLayout>
+	</LinearLayout>
+</android.support.constraint.ConstraintLayout>
