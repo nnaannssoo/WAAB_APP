@@ -1,5 +1,5 @@
 <resources>
-	<string name="app_name">WAAB</string>
+	<string name="app_name">We All Are Bus</string>
 	<string name="r1">Ruta 1</string>
 	<string name="r2">Ruta 2</string>
 	<string name="r3">Ruta 3</string>
@@ -27,5 +27,18 @@
 	<string name="confirmar">Confirmar</string>
 	<string name="regresar">Regresar</string>
 	<string name="urlApi">https://127.0.0.1/</string>
+
+	<string name="launch_activity">Launch activity</string>
+	<string name="location_unknown">Location unknown</string>
+	<string name="location_updates_label">Location Updates</string>
+
+	<string name="permission_rationale">Location permission is needed for core functionality</string>
+	<string name="permission_denied_explanation">Permission was denied, but is needed for core
+		functionality.</string>
+	<string name="settings">Settings</string>
+	<string name="ok">OK</string>
+	<string name="request_location_updates">Request location updates</string>
+	<string name="remove_location_updates">Remove location updates</string>
+	<string name="location_updated">Location Updated: %1$s</string>
 
 </resources>

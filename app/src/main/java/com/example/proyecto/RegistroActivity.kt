@@ -1,13 +1,14 @@
 package com.example.proyecto
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent.getActivity
-import android.content.DialogInterface
-import android.content.Intent
+import android.content.*
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Geocoder
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.os.IBinder
 import android.os.Looper
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AlertDialog
@@ -15,6 +16,9 @@ import android.util.Log
 import android.widget.Toast
 import com.example.proyecto.MainActivity.Companion.ruta
 import com.example.proyecto.RegistroActivity.Companion.contributte
+import com.example.proyecto.RegistroActivity.Companion.gpsState
+import com.example.proyecto.Ruta.Companion.getNameFile
+import com.example.proyecto.google.ForegroundService
 import com.example.proyecto.google.MathUtil
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
@@ -42,32 +46,28 @@ import kotlin.collections.ArrayList
 import com.google.maps.android.PolyUtil as PolyUtil1
 
 private const val LOCATION_PERMISSION_REQUEST_CODE = 1
-class RegistroActivity : AppCompatActivity(){
+class RegistroActivity : AppCompatActivity() {
 
     private lateinit var map: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
     lateinit var mapFragment: SupportMapFragment
-    private lateinit var serviceApi :ApiService
+    private lateinit var serviceApi: ApiService
     private var ubicacion: LatLng? = null
     lateinit var retrofit: Retrofit
-
-
-
-    private lateinit var registerService : RegisterService
-
-
+    private var myService : ForegroundService? = null
+    private var isBound= false
+    private lateinit var registerService: RegisterService
     val REQUEST_CODE_LOCATION = 1
     companion object {
         private const val UPDATE_INTERVAL = 600000 // 10 min
         private const val FASTEST_INTERVAL = 10000 // 5 min
         private const val DISPLACEMENT = 10 // 1 km
-        const  val RUN_TIME_PERMISSION_CODE = 999
-        public var contributte : Boolean = false
-
+        const val RUN_TIME_PERMISSION_CODE = 999
+        var gpsState :Boolean= false
+        public var contributte: Boolean? = null
     }
-
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -79,35 +79,63 @@ class RegistroActivity : AppCompatActivity(){
             map.uiSettings.isMyLocationButtonEnabled = true
         })
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        buildLocationRequest(5000,10000,10f)
-        buildLocationCallback()
-        StartUpdateLocations()
-        getUbicacion()
-        checkGpsSetting()
-        if(ubicacion!=null)
-        StopUpdateLocations()
-
+            buildLocationRequest(5000, 10000, 10f)
+            buildLocationCallback()
+            checkGpsSetting()
+            StartUpdateLocations()
+            getUbicacion()
+            if (ubicacion != null)
+                StopUpdateLocations()
         retrofit = Retrofit.Builder()
             .baseUrl("http://148.204.142.162:3031/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-        serviceApi= retrofit.create<ApiService>(ApiService::class.java)
+        serviceApi = retrofit.create<ApiService>(ApiService::class.java)
         btn_actualizar.setOnClickListener {
             StartUpdateLocations()
             //locationRequest.setSmallestDisplacement(10.0f)
+            Thread.sleep(1000)
             getUbicacion()
+            StopUpdateLocations()
         }
         btn_confirmar.setOnClickListener {
-            validarRegistro()
+            //validarRegistro()
+            var y = getUbicacion()
+            if(y==null)
+            //ForegroundService.startService(this,"Servicio corriendo",y!!)
+                checkGpsSetting()
+                if(gpsState)
+                {
+                    y =getUbicacion()
+                }
+            validarRegistro2()
+        }
+        btn_regresar.setOnClickListener {
+            var i =Intent(this.applicationContext,ColaborationActivity::class.java)
+            startActivity(i)
+        }
+    }
+    fun bindStoService()
+    {
+        val intent = Intent(this, ForegroundService::class.java)
+        bindService(intent, myConnection, Context.BIND_AUTO_CREATE)
+        if(isBound)
+        {
+            Log.d("ENLAZADO","SI")
+        }
+        else
+        {
+            Log.d("NELPASTEL","NO")
         }
     }
     override fun onStart() {
         super.onStart()
+        checkGpsSetting()
         getUbicacion()
         var hora = LocalDateTime.now()
         StopUpdateLocations()
-        //validarRegistro()
     }
+
     override fun onStop() {
         super.onStop()
         try {
@@ -116,6 +144,7 @@ class RegistroActivity : AppCompatActivity(){
             Toast.makeText(this, "Algo salió mal ", Toast.LENGTH_SHORT)
         }
     }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
@@ -131,37 +160,35 @@ class RegistroActivity : AppCompatActivity(){
             }
         }
     }
-    private  fun checkGpsSetting() {
+    private fun checkGpsSetting(): Boolean {
         val builder = LocationSettingsRequest.Builder()
         builder.addLocationRequest(locationRequest!!)
         val task = LocationServices.getSettingsClient(this).checkLocationSettings(builder.build())
-
         task.addOnCompleteListener { result ->
             try {
                 result.getResult(ApiException::class.java)
                 // All location settings are satisfied. The client can initialize location
                 // requests here.
+                gpsState= true
             } catch (exception: ApiException) {
                 when (exception.statusCode) {
-                    LocationSettingsStatusCodes.RESOLUTION_REQUIRED ->{
+                    LocationSettingsStatusCodes.RESOLUTION_REQUIRED -> {
                         val resolvable = exception as ResolvableApiException
-
                         resolvable.startResolutionForResult(this, MainActivity.GPS_REQUEST_CODE)
-
                     }
                     // Location settings are not satisfied. But could be fixed by showing the
                     // user a dialog.
                     // Cast to a resolvable exception.
-                    LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE -> {
-                        //empty
-                    }
                 }
+                gpsState= false
                 // Show the dialog by calling startResolutionForResult(),
                 // Location settings are not satisfied. However, we have no way to fix the
                 // settings so we won't show the dialog.
             }
         }
+        return gpsState
     }
+
     private fun loadSamples(nameFile: String): ArrayList<LatLng> {
         var inputStreamReader = InputStreamReader(assets.open(nameFile))
         var bufferedReader: BufferedReader = BufferedReader(inputStreamReader)
@@ -193,9 +220,9 @@ class RegistroActivity : AppCompatActivity(){
                 REQUEST_CODE_LOCATION
             )
         }
-
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
     }
+
     private fun StopUpdateLocations() {
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -211,14 +238,14 @@ class RegistroActivity : AppCompatActivity(){
 
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
-
     private fun buildLocationCallback() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult?) {
-                Toast.makeText(this@RegistroActivity,"Llegó nueva ubicacion",Toast.LENGTH_SHORT)
+                Toast.makeText(this@RegistroActivity, "Llegó nueva ubicacion", Toast.LENGTH_SHORT)
                 var geocoder = Geocoder(applicationContext, Locale.getDefault())
                 var location = p0!!.locations.get(p0!!.locations.size - 1) //Ultima ubicacion
-                txt_latlng.text = "Ultima Ubicacion:   " + (location.latitude.toString() + location.longitude.toString())
+                txt_latlng.text =
+                    "Ultima Ubicacion:   " + (location.latitude.toString() + location.longitude.toString())
                 var aux = geocoder.getFromLocation(location.latitude, location.longitude, 2);
                 Toast.makeText(this@RegistroActivity, ubicacion.toString(), Toast.LENGTH_SHORT).show()
                 ubicacion = LatLng(location.latitude, location.longitude)
@@ -240,7 +267,7 @@ class RegistroActivity : AppCompatActivity(){
         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         locationRequest.smallestDisplacement = smallestDisplacement//meters
     }
-    public fun getUbicacion(): LatLng? {
+    fun getUbicacion(): LatLng? {
         if (ActivityCompat.checkSelfPermission(
                 this,
                 android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -256,7 +283,8 @@ class RegistroActivity : AppCompatActivity(){
             if (location != null) {
                 ubicacion = LatLng(location.latitude, location.longitude)
                 var geocoder = Geocoder(applicationContext, Locale.getDefault())
-                txt_latlng.text ="Ultima Ubicacion:   " + (location.latitude.toString() + location.longitude.toString())
+                txt_latlng.text =
+                    "Ultima Ubicacion:   " + (location.latitude.toString() + location.longitude.toString())
                 var aux = geocoder.getFromLocation(location.latitude, location.longitude, 2)
                 txt_direccion.text = aux[0].getAddressLine(0)
                 Toast.makeText(this@RegistroActivity, ubicacion.toString(), Toast.LENGTH_SHORT).show()
@@ -268,15 +296,17 @@ class RegistroActivity : AppCompatActivity(){
                     map.addMarker(MarkerOptions().position(ubicacion!!))
                     map.animateCamera(CameraUpdateFactory.newLatLngZoom(ubicacion!!, 18f))
                 }
+                else{
+                    Log.d("NULLLLL","La ubicaicon es null")
+                }
                 Log.d("Si", aux[0].getAddressLine(0))
             }
-           // StopUpdateLocations()
+            // StopUpdateLocations()
         }
-
+        Log.d("Ubicacion", ubicacion.toString())
         return ubicacion
     }
-    public fun wantsToConttribute() : Boolean
-    {
+    fun wantsToConttribute() :Boolean{
         var answer = false
         //Ask user if wants to contributte
         val builder = AlertDialog.Builder(this@RegistroActivity)
@@ -288,17 +318,27 @@ class RegistroActivity : AppCompatActivity(){
 
         // Set a positive button and its click listener on alert dialog
         // Display a neutral button on alert dialog
-        builder.setPositiveButton("SI", DialogInterface.OnClickListener(function = { dialogInterface: DialogInterface, i: Int ->
-            Toast.makeText(applicationContext, "Gracias por contribuir, no olvides REGISTRAR tu BAJADA", Toast.LENGTH_SHORT).show()
-            answer= true
-            contributte = true
-        }))
+        builder.setPositiveButton(
+            "SI",
+            DialogInterface.OnClickListener { dialogInterface: DialogInterface, i: Int ->
+                Toast.makeText(
+                    applicationContext,
+                    "Gracias por contribuir, no olvides REGISTRAR tu BAJADA",
+                    Toast.LENGTH_SHORT
+                ).show()
+                bindStoService()
+                if(isBound)
+                {
+                    myService!!.startContributtion()
+                }
+                answer=true
 
 
-
-        builder.setNegativeButton("NO"){ _, _ ->
+            }
+        )
+        builder.setNegativeButton("NO") { _, _ ->
             Toast.makeText(applicationContext, "Gracias, hasta la próxima", Toast.LENGTH_SHORT).show()
-            contributte= false
+            answer = false
         }
         // Finally, make the alert dialog using builder
         val dialog: AlertDialog = builder.create()
@@ -307,222 +347,20 @@ class RegistroActivity : AppCompatActivity(){
         dialog.show()
         return answer
     }
+    private val myConnection = object : ServiceConnection {
+        override fun onServiceConnected(className: ComponentName,
+                                        service: IBinder
+        ) {
+            val binder = service as ForegroundService.MyBinder
+            myService = binder.getService()
+            isBound = true
+        }
 
-    public fun validarRegistro() {
-
-        if(ubicacion!=null) {
-            var samples = loadSamples(getNameFile())
-            val lastLocation = getUbicacion() //La ubicacion del usuario
-            StopUpdateLocations()
-            var nearPoints = com.example.proyecto.google.PolyUtil.locationIndexOnEdgeOrPathPoint(
-                ubicacion,
-                samples,
-                true,
-                true,
-                25.0
-            )
-            if(nearPoints!=null) {
-                var intent = Intent(
-                    this.applicationContext,
-                    RegisterService::class.java
-                )
-                if (nearPoints.size > 1) {
-                    /*wantsToConttribute()
-                   var t= contributte
-                   if(t)*/
-                        startService(intent)
-
-                    //
-                    locationRequest.setSmallestDisplacement(50.0f)
-                    var lessThan50: Boolean = true
-                    StartUpdateLocations()
-                    while (lessThan50) {
-                        Thread.sleep(1000)//300000) //5min
-                        var newLocation = getUbicacion() //LatLng(22.775086, -102.574547)//
-                        StopUpdateLocations()
-                        var distance = SphericalUtil.computeDistanceBetween(newLocation, lastLocation)
-                        if (distance >= 50) {
-                            var newNearPoints = com.example.proyecto.google.PolyUtil.locationIndexOnEdgeOrPathPoint(
-                                newLocation,
-                                samples,
-                                true,
-                                true,
-                                25.0
-                            )
-                            if (newNearPoints.size > 0 || newNearPoints.size != null) {
-                                if (newNearPoints.size == 1) {
-                                    sendReg(newNearPoints[0].point!!, newNearPoints[0].index)
-                                    lessThan50 = false
-                                    /*wantsToConttribute()
-                                   var t= contributte
-                                   if(t)*/
-                                        startService(intent)
-
-                                } else {
-                                    if (newNearPoints[0].index > nearPoints[0].index) {
-                                        //Bearing AB [0] = Ida
-                                        //Send newNearPoints [0] to server
-                                        sendReg(newNearPoints[0].point!!, newNearPoints[0].index)
-                                        /*wantsToConttribute()
-                                        var t= contributte
-                                        if(t)*/
-                                            startService(intent)
-
-                                        lessThan50 = false
-                                    }
-                                    if (newNearPoints[1].index > nearPoints[1].index) {
-                                        //Bearing AB [0] = Regreso
-                                        sendReg(newNearPoints[1].point!!, newNearPoints[1].index)
-                                        /*wantsToConttribute()
-                                        var t= contributte
-                                        if(t)*/
-                                            startService(intent)
-
-                                        lessThan50 = false
-                                    }
-                                }
-                            }
-                            if (lessThan50) {
-                                //?? Error
-                                Toast.makeText(this, "Error con las muestras", Toast.LENGTH_SHORT).show()
-                                lessThan50 = false
-                            }
-                        }
-                    }
-
-                } else if (nearPoints.size != 0)
-                {
-                    sendReg(nearPoints[0].point!!, nearPoints[0].index)
-                    /*wantsToConttribute()
-                    var t= contributte
-                    if(t)*/
-                        startService(intent)
-
-                } else
-                {
-                    val builder = AlertDialog.Builder(this@RegistroActivity)
-                    // Set the alert dialog title
-                    builder.setTitle("Error")
-
-                    // Display a message on alert dialog
-                    builder.setMessage("Parece que tu ubicación no coincide con ninguna ruta")
-
-                    // Set a positive button and its click listener on alert dialog
-
-
-                    // Display a neutral button on alert dialog
-                    builder.setNeutralButton("OK") { _, _ ->
-                        Toast.makeText(applicationContext, "OK.", Toast.LENGTH_SHORT).show()
-                    }
-
-                    // Finally, make the alert dialog using builder
-                    val dialog: AlertDialog = builder.create()
-
-                    // Display the alert dialog on app interface
-                    dialog.show()
-                }
-
-            }
-            else
-            {
-
-                val builder = AlertDialog.Builder(this@RegistroActivity)
-                // Set the alert dialog title
-                builder.setTitle("Error")
-
-                // Display a message on alert dialog
-                builder.setMessage("Algo salió mal")
-
-                // Set a positive button and its click listener on alert dialog
-
-
-                // Display a neutral button on alert dialog
-                builder.setNeutralButton("OK") { _, _ ->
-                    Toast.makeText(applicationContext, "OK.", Toast.LENGTH_SHORT).show()
-                }
-
-                // Finally, make the alert dialog using builder
-                val dialog: AlertDialog = builder.create()
-
-                // Display the alert dialog on app interface
-                dialog.show()
-            }
+        override fun onServiceDisconnected(name: ComponentName) {
+            isBound = false
         }
     }
-
-    public fun getNameFile() : String
-    {
-        var nameFile: String =""
-        when (ruta) {
-            0 -> {
-                //Ruta 1 Antihorario
-                nameFile= "ruta_1.txt"
-            }
-            1 -> {
-                //RUTA 1 Horario
-                nameFile= "ruta_1Horario.txt"
-
-            }
-            2 -> {
-                nameFile= "ruta_2.txt"
-            }
-            3 -> {
-                nameFile= "ruta_3.txt"
-            }
-            4 -> {
-                nameFile= "ruta_4.txt"
-
-            }
-            5 -> {
-                nameFile= "ruta_5.txt"
-            }
-            6 -> {
-                //RUTA 6
-                nameFile= "ruta_6.txt"
-            }
-            7 -> {
-                nameFile= "ruta_7.txt"
-            }
-            8 -> {
-                nameFile= "ruta_8.txt"
-            }
-            9 -> {
-                nameFile= "ruta_9.txt"
-            }
-            10 -> {
-                nameFile= "ruta_11.txt"
-            }
-            11 -> {
-                //RUTA 11B
-                nameFile= "ruta_11b.txt"
-
-            }
-            12 -> {
-                nameFile= "ruta_13.txt"
-            }
-            13 -> {
-                nameFile= "ruta_14.txt"
-            }
-            14 -> {
-                nameFile= "ruta_15.txt"
-            }
-            15 -> {
-                nameFile= "ruta_16.txt"
-            }
-            16 -> {
-                nameFile= "ruta_17.txt"
-            }
-            17 -> {
-                nameFile= "ruta_TdG.txt"
-            }
-            18 -> {
-                nameFile= "ruta_TyL.txt"
-            }
-
-        }
-        return nameFile
-    }
-    public fun sendReg(point : LatLng, sample : Int) {
+    fun sendReg(point: LatLng, sample: Int) {
 
         val myFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy/HH:mm:ss")
         var rdata = regData(
@@ -545,6 +383,61 @@ class RegistroActivity : AppCompatActivity(){
             }
         })
     }
+    public fun validarRegistro2() {
+        if(ubicacion!=null) {
+            var samples = loadSamples(getNameFile())
+            val lastLocation = getUbicacion() //La ubicacion del usuario
+            Log.d("Ubicacion", lastLocation.toString())
+            var nearPoints = com.example.proyecto.google.PolyUtil.locationIndexOnEdgeOrPathPoint(
+                ubicacion,
+                samples,
+                true,
+                true,
+                25.0
+            )
+            if (nearPoints != null && nearPoints.size == 1) {
+                sendReg(lastLocation!!,nearPoints[0].index)
+                wantsToConttribute()
+            }
+            else if(nearPoints.size>1)
+            {
+                if(checkGpsSetting())
+                {
+                    wantsToConttribute()
+                    ForegroundService.startService(this,"Validando tu registro... ",lastLocation!!,ArrayList(nearPoints),true)
+                }
+            }
+            else
+            {
+                val builder = AlertDialog.Builder(this@RegistroActivity)
+                // Set the alert dialog title
+                builder.setTitle("Error")
+                // Display a message on alert dialog
+                builder.setMessage("Parece que tu ubicación no coincide con ninguna ruta")
+                // Display a neutral button on alert dialog
+                builder.setNeutralButton("OK"){_,_ ->
+                    Toast.makeText(applicationContext,"OK.",Toast.LENGTH_SHORT).show()
+                }
+
+                // Finally, make the alert dialog using builder
+                val dialog: AlertDialog = builder.create()
+                // Display the alert dialog on app interface
+                dialog.show()
+            }
+        }
+        else
+        {
+            checkGpsSetting()
+        }
+    }
+    inner class broadcast : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            finish()
+        }
+
+
+    };
+
 }
 
 

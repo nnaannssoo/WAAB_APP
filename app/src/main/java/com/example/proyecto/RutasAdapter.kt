@@ -2,6 +2,7 @@ package com.example.proyecto
 
 import android.content.Context
 import android.support.v7.widget.RecyclerView
+import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -42,6 +43,10 @@ class RutasAdapter(private val mContext: Context, private val listaRutas: List<R
         val viewHolder= layout.tag as ViewHolder
         viewHolder.nombreTextView.text= ruta.nombre
         viewHolder.sentidoTextView.text=ruta.sentido
+        viewHolder.nombreTextView.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+        viewHolder.sentidoTextView.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+        viewHolder.sentidoTextView.setSelected(true);
+        viewHolder.nombreTextView.setSelected(true);
         viewHolder.imagenView.setImageResource(ruta.id);
         return layout
     }

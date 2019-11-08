@@ -11,9 +11,14 @@ import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.animation.LinearInterpolator
 import android.widget.Toast
+import com.example.proyecto.ImageUtil.*
+import com.example.proyecto.Ruta.Companion.ruta1
 import com.example.proyecto.Ruta.Companion.ruta5
 import com.example.proyecto.Ruta.Companion.ruta7
 import com.example.proyecto.google.MathUtil
+import com.example.proyecto.mapasVista.Companion.backGroungPoly
+import com.example.proyecto.mapasVista.Companion.foreGroungPoly
+import com.google.android.gms.common.internal.ResourceUtils
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 
@@ -34,23 +39,19 @@ import java.sql.Array
 
 class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener  {
 
+    private lateinit var samples: ArrayList<LatLng>
     private lateinit var ubicacionCliente: FusedLocationProviderClient
     private lateinit var ultimaUbicacion: Location  //
     lateinit var backGroungPoly: List<LatLng>
     lateinit var foreGroungPoly: List<LatLng>
     private var ruta: Int? = null
     private lateinit var mMap: GoogleMap
-    private  val earthRadius = 6378000.0
 
     companion object {
         //PERSMISOS EN TIEMPO DE EJECUCIÓN
         private  val LOCATION_PERMISSION_REQUEST_CODE = 1
         lateinit  var backGroungPoly: List<LatLng>
         lateinit var foreGroungPoly: List<LatLng>
-    }
-    public fun getEarthRadius(): Double
-    {
-        return this.earthRadius
     }
 
     override fun onMarkerClick(p0: Marker?): Boolean {
@@ -66,7 +67,6 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
         mapFragment.getMapAsync(this)
         this.ruta = MainActivity.ruta
         Toast.makeText(this, "Seleccionaste ruta : " + ruta.toString(), Toast.LENGTH_SHORT).show()
-
 
     }
     private fun agregarMarcador(coordenada: LatLng) {
@@ -93,9 +93,10 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
     }
 
     private fun agregarmarcadores(marcadores: ArrayList<LatLng>, icono: Int) {
+        var icon = (BitmapDescriptorFactory.fromBitmap(getBitmapFromVectorDrawable(getApplicationContext(), icono)))
         for (marcador in marcadores) {
-            mMap.addMarker(MarkerOptions().position(marcador).icon(
-                BitmapDescriptorFactory.fromResource(icono)))
+
+            mMap.addMarker(MarkerOptions().position(marcador).icon(icon))
         }
     }
 
@@ -136,8 +137,8 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
         backGroungPoly = PolyUtil.decode(poliliniea)
         mMap.addPolyline(
             PolylineOptions().addAll(backGroungPoly)
-                .width(8f)
-                .color(Color.BLACK)
+                .width(15f)
+                .color(Color.rgb(150, 207, 169 ))
                 .startCap(SquareCap())
                 .endCap(SquareCap())
                 .jointType(ROUND)
@@ -145,8 +146,8 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
         )
         mMap.addPolyline(
             PolylineOptions().addAll(backGroungPoly)
-                .width(8f)
-                .color(Color.YELLOW)
+                .width(10f)
+                .color(Color.rgb(194, 248, 229))
                 .startCap(SquareCap())
                 .endCap(SquareCap())
                 .jointType(ROUND)
@@ -235,49 +236,38 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
         when (ruta) {
             0 -> {
                 //RUTA 1 Antihorario
+                getSupportActionBar()!!.setTitle(R.string.r1)
                 agregarPolilinea(Ruta.ruta1.polilinea)
-                var R5 = PolyUtil.decode(Ruta.ruta5.polilinea)
-                //agregarmarcadores(Paradas.getR1(), R.drawable.m_1)
+                agregarmarcadores(Paradas.getR1(), R.drawable.ic_mr1)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR1().get(0), 13f))
-                //var punto= com.example.proyecto.google.PolyUtil.locationIndexOnEdgeOrPathPoint(LatLng(22.787214, -102.570000),backGroungPoly,true,true,50.0)
-                //Log.d("AAAAA",punto.toString())
-                var list = loadSamples("ruta_5.txt")
-
-
-
-                //mas cerca de casa
-                //22.763673, -102.597502
-                //22.763651, -102.597674 enfente
-                var points=com.example.proyecto.google.PolyUtil.locationIndexOnEdgeOrPathPoint(LatLng(22.763673, -102.597502),list,true,true,25.0)
-                Log.d("Puntos mas cercano",points.toString())
 
             }
             1->
             {
                 //RUTA 1 Horario
-                getSupportActionBar()!!.setTitle(R.string.r2)
+                getSupportActionBar()!!.setTitle(R.string.r1)
                 agregarPolilinea(Ruta.ruta1Horario.polilinea)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR1().get(0), 13f))
-                agregarmarcadores(Paradas.getR1(), R.drawable.m_1)
+                agregarmarcadores(Paradas.getR1(), R.drawable.ic_mr1)
             }
             2->
             {
                 getSupportActionBar()!!.setTitle(R.string.r2)
                 agregarPolilinea(Ruta.ruta2.polilinea)
-                agregarmarcadores(Paradas.getR2(), R.drawable.m_2)
+                agregarmarcadores(Paradas.getR2(), R.drawable.ic_mr2)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR2().get(0), 13f))
             }
             3->
             {
                 getSupportActionBar()!!.setTitle(R.string.r3)
                 agregarPolilinea(Ruta.ruta3.polilinea)
-                agregarmarcadores(Paradas.getR3(), R.drawable.m_3)
+                agregarmarcadores(Paradas.getR3(), R.drawable.ic_mr3)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR3().get(0), 13f))
             }
             4 -> {
                 getSupportActionBar()!!.setTitle(R.string.r4)
                 agregarPolilinea(Ruta.ruta4.polilinea)
-                agregarmarcadores(Paradas.getR4(), R.drawable.m_4)
+                agregarmarcadores(Paradas.getR4(), R.drawable.ic_mr4)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR4().get(0), 13f))
 
             }
@@ -285,52 +275,49 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
             {
                 getSupportActionBar()!!.setTitle(R.string.r5)
                 agregarPolilinea(Ruta.ruta5.polilinea)
-                agregarmarcadores(Paradas.getR5(), R.drawable.m_5 )
+                agregarmarcadores(Paradas.getR5(),R.drawable.ic_mr5)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR5().get(0), 13f))
             }
             6 -> {
                 //RUTA 7
                 getSupportActionBar()!!.setTitle(R.string.r6)
-                /*val stream = File("C:\Users\\nnaan\\AndroidStudioProjects\Proyecto\app\src\main\res\raw\marcadores.xml").inputStream()
-                val layer = KmlLayer(mMap, stream, this)
-                layer.addLayerToMap();*/
                 agregarPolilinea(Ruta.ruta6.polilinea)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR6().get(0), 13f))
-                agregarmarcadores(Paradas.getR6(), R.drawable.m_6)
+                agregarmarcadores(Paradas.getR6(), R.drawable.ic_mr6)
 
             }
             7->
             {
                 getSupportActionBar()!!.setTitle(R.string.r7)
                 agregarPolilinea(Ruta.ruta7.polilinea)
-                agregarmarcadores(Paradas.getR7(), R.drawable.m_7)
+                agregarmarcadores(Paradas.getR7(), R.drawable.ic_mr7)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR7().get(0), 13f))
             }
             8 -> {
                 getSupportActionBar()!!.setTitle(R.string.r8)
                 agregarPolilinea(Ruta.ruta8.polilinea)
-                agregarmarcadores(Paradas.getR8(), R.drawable.m_8)
+                agregarmarcadores(Paradas.getR8(), R.drawable.ic_mr8)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR8().get(0), 13f))
             }
             9->
             {
                 getSupportActionBar()!!.setTitle(R.string.r9)
                 agregarPolilinea(Ruta.ruta9.polilinea)
-                agregarmarcadores(Paradas.getR9(), R.drawable.m_9)
+                agregarmarcadores(Paradas.getR9(), R.drawable.ic_mr9)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR9().get(0), 13f))
             }
             10->
             {
                 getSupportActionBar()!!.setTitle(R.string.r11)
                 agregarPolilinea(Ruta.ruta11.polilinea)
-                agregarmarcadores(Paradas.getR11(), R.drawable.m_11)
+                agregarmarcadores(Paradas.getR11(), R.drawable.ic_mr11)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR11().get(0), 13f))
             }
             11 -> {
                 //RUTA 11B
                 getSupportActionBar()!!.setTitle(R.string.r11)
                 agregarPolilinea(Ruta.ruta11_b.polilinea)
-                agregarmarcadores(Paradas.getR11(), R.drawable.m_11)
+                agregarmarcadores(Paradas.getR11(), R.drawable.ic_mr11)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR11().get(0), 13f))
 
             }
@@ -338,49 +325,49 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
             {
                 getSupportActionBar()!!.setTitle(R.string.r13)
                 agregarPolilinea(Ruta.ruta13.polilinea)
-                agregarmarcadores(Paradas.getR13(), R.drawable.m_13)
+                agregarmarcadores(Paradas.getR13(), R.drawable.ic_mr13)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR13().get(0), 13f))
             }
             13->
             {
                 getSupportActionBar()!!.setTitle(R.string.r14)
                 agregarPolilinea(Ruta.ruta14.polilinea)
-                agregarmarcadores(Paradas.getR14(), R.drawable.m_14)
+                agregarmarcadores(Paradas.getR14(), R.drawable.ic_mr14)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR14().get(0), 13f))
             }
             14->
             {
                 getSupportActionBar()!!.setTitle(R.string.r15)
                 agregarPolilinea(Ruta.ruta15.polilinea)
-                agregarmarcadores(Paradas.getR15(), R.drawable.m_15)
+                agregarmarcadores(Paradas.getR15(), R.drawable.ic_mr15)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR15().get(0), 13f))
             }
             15->
             {
                 getSupportActionBar()!!.setTitle(R.string.r16)
                 agregarPolilinea(Ruta.ruta16.polilinea)
-                agregarmarcadores(Paradas.getR16(), R.drawable.m_16)
+                agregarmarcadores(Paradas.getR16(), R.drawable.ic_mr16)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR16().get(0), 13f))
             }
             16->
             {
                 getSupportActionBar()!!.setTitle(R.string.r17)
                 agregarPolilinea(Ruta.ruta17.polilinea)
-                agregarmarcadores(Paradas.getR13(), R.drawable.m_17)
+                agregarmarcadores(Paradas.getR13(), R.drawable.ic_mr17)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR17().get(0), 13f))
             }
             17->
             {
                 getSupportActionBar()!!.setTitle(R.string.rtyl)
                 agregarPolilinea(Ruta.rutaTyL.polilinea)
-                agregarmarcadores(Paradas.getRTyL(), R.drawable.m_tdg_1)
+                agregarmarcadores(Paradas.getRTyL(), R.drawable.ic_mrtdg)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getRTyL().get(0), 13f))
             }
             18->
             {
                 getSupportActionBar()!!.setTitle(R.string.rtdg)
                 agregarPolilinea(Ruta.rutaTdG.polilinea)
-                agregarmarcadores(Paradas.getRTdG(), R.drawable.m_tdg_1)
+                agregarmarcadores(Paradas.getRTdG(), R.drawable.ic_mr1)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getRTdG().get(0), 13f))
             }
 
@@ -414,16 +401,100 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
 
         return LatLng(lat,lon)
     }
-    private fun obtainSamplesbyDistance(polyline: ArrayList<LatLng>, distance: Double) : ArrayList <LatLng>?
+/*
+    private fun obtainSamplesbyDistance(polyline: ArrayList<LatLng>, eachDistance: Double) : ArrayList <LatLng>?
     {
-        //¿Como sacabamos el bearing?
-        var sample : LatLng
-            for(polypoint : LatLng in polyline )
-        {
-           // sample = destinationPoint(polypoint,distance, SphericalUtil.computeHeading(polypoint, ))
-        }
 
-        return null
+        var sample : LatLng
+        var distance =0.0
+        var samples = ArrayList<LatLng> ()
+        samples.add(polyline.get(0))
+        var auxiliarPoint: LatLng = polyline.get(1)
+        var polyPoint : LatLng = polyline.get(0)
+        var i=1
+        while(i<polyline.size-1)
+            {
+                auxiliarPoint= polyline.get(i)
+                distance += SphericalUtil.computeDistanceBetween(polyPoint,auxiliarPoint)
+                if(distance >=50) {
+                    sample = destinationPoint(
+                        polyPoint,
+                        eachDistance,
+                        SphericalUtil.computeHeading(polyPoint, auxiliarPoint)
+                    )
+                    distance=0.0
+                    samples.add(sample)
+                    polyPoint= sample
+                }
+                else
+                {
+                    i++
+                }
+
+
+            }
+        samples.add(polyline.get(polyline.size-1))
+        for ((index, value) in samples.withIndex()) {
+            var i= index+1
+            if(i!= samples.size) {
+                var j = SphericalUtil.computeDistanceBetween(value, samples.get(i))
+                Log.d("Ok",j.toString())
+            }
+
+        }
+        return samples
+
+    }*/
+private fun obtainSamplesbyDistance(polyline: ArrayList<LatLng>, eachDistance: Double) : ArrayList <LatLng>?
+{
+
+    var sample : LatLng
+    var distance =0.0
+    var samples = ArrayList<LatLng> ()
+    samples.add(polyline.get(0))
+    var auxiliarPoint: LatLng = polyline.get(1)
+    var polyPoint : LatLng = polyline.get(0)
+    var i=1
+    var diToGo = 0.0
+    while(i<polyline.size-1)
+    {
+        auxiliarPoint= polyline.get(i)
+        distance += SphericalUtil.computeDistanceBetween(polyPoint,auxiliarPoint)
+
+        while(distance >= eachDistance) {
+            diToGo= eachDistance - (distance - SphericalUtil.computeDistanceBetween(polyPoint,auxiliarPoint))
+            sample = destinationPoint(
+                polyPoint,
+                diToGo,
+                SphericalUtil.computeHeading(polyPoint, auxiliarPoint)
+            )
+            samples.add(sample)
+            polyPoint= sample
+            distance = SphericalUtil.computeDistanceBetween(polyPoint,auxiliarPoint)
+        }
+        i++
+        polyPoint= auxiliarPoint
     }
+    samples.add(polyline.get(polyline.size-1))
+    return samples
+
+}
+   /*private fun obtainSamplesbyDistanc(polyline: ArrayList<LatLng>, each: Double){
+        var samples : ArrayList<LatLng>
+        var dist : double
+        samples.add(polyline(0))
+        dist = 0
+        for(i=0; i<polyline.size-1; i++)
+        {
+            pointA=polyline(i)
+            pointB=polyline(i+1)
+            dist = dist + distance(pointA,pointB)
+            if (dist>=each){
+                samples.add(destinationPoint(pointA, each, bearing(pointA,pointB)))
+                dist = 0
+            }
+        }
+        samples.add(polyline(polyline.size-1))
+    }*/
 
 }

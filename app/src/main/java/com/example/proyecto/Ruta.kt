@@ -106,6 +106,77 @@ class Ruta(val nombre: String, val sentido: String, val id: Int)
             }
             return nombre_ruta
         }
+        public fun getNameFile(): String {
+            var nameFile: String = ""
+            when (MainActivity.ruta) {
+                0 -> {
+                    //Ruta 1 Antihorario
+                    nameFile = "ruta_1.txt"
+                }
+                1 -> {
+                    //RUTA 1 Horario
+                    nameFile = "ruta_1Horario.txt"
+
+                }
+                2 -> {
+                    nameFile = "ruta_2.txt"
+                }
+                3 -> {
+                    nameFile = "ruta_3.txt"
+                }
+                4 -> {
+                    nameFile = "ruta_4.txt"
+
+                }
+                5 -> {
+                    nameFile = "ruta_5.txt"
+                }
+                6 -> {
+                    //RUTA 6
+                    nameFile = "ruta_6.txt"
+                }
+                7 -> {
+                    nameFile = "ruta_7.txt"
+                }
+                8 -> {
+                    nameFile = "ruta_8.txt"
+                }
+                9 -> {
+                    nameFile = "ruta_9.txt"
+                }
+                10 -> {
+                    nameFile = "ruta_11.txt"
+                }
+                11 -> {
+                    //RUTA 11B
+                    nameFile = "ruta_11b.txt"
+
+                }
+                12 -> {
+                    nameFile = "ruta_13.txt"
+                }
+                13 -> {
+                    nameFile = "ruta_14.txt"
+                }
+                14 -> {
+                    nameFile = "ruta_15.txt"
+                }
+                15 -> {
+                    nameFile = "ruta_16.txt"
+                }
+                16 -> {
+                    nameFile = "ruta_17.txt"
+                }
+                17 -> {
+                    nameFile = "ruta_TdG.txt"
+                }
+                18 -> {
+                    nameFile = "ruta_TyL.txt"
+                }
+
+            }
+            return nameFile
+        }
     }
 
 

@@ -1,6 +1,7 @@
 package com.example.proyecto
 
 import android.content.Intent
+import android.graphics.Typeface
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -12,6 +13,9 @@ import com.google.maps.android.SphericalUtil
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.item_ruta.*
 import java.nio.file.Files.size
+import android.widget.TextView
+
+
 
 class MainActivity : AppCompatActivity(), opcionesSheetEx.BottomListener{
 
@@ -57,6 +61,15 @@ class MainActivity : AppCompatActivity(), opcionesSheetEx.BottomListener{
             fragmentoOpciones.setPosition(position);
             ruta=position;
             fragmentoOpciones.show(supportFragmentManager, "opcionesSheetEx")
+        }
+    }
+    fun Toolbar.changeToolbarFont(){
+        for (i in 0 until childCount) {
+            val view = getChildAt(i)
+            if (view is TextView && view.text == title) {
+                view.typeface = Typeface.createFromAsset(view.context.assets, "font/everything")
+                break
+            }
         }
     }
 
