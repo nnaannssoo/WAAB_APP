@@ -1,10 +1,6 @@
 package com.example.proyecto
-
-import android.annotation.SuppressLint
-import android.app.PendingIntent.getActivity
 import android.content.*
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.location.Geocoder
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -15,11 +11,8 @@ import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.widget.Toast
 import com.example.proyecto.MainActivity.Companion.ruta
-import com.example.proyecto.RegistroActivity.Companion.contributte
-import com.example.proyecto.RegistroActivity.Companion.gpsState
 import com.example.proyecto.Ruta.Companion.getNameFile
 import com.example.proyecto.google.ForegroundService
-import com.example.proyecto.google.MathUtil
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -27,9 +20,7 @@ import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.gson.Gson
-import com.google.maps.android.SphericalUtil
 import kotlinx.android.synthetic.main.activity_registro.*
-import kotlinx.android.synthetic.main.fragment_item_list_dialog.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -38,7 +29,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.lang.Exception
-import java.time.Instant
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -66,7 +56,7 @@ class RegistroActivity : AppCompatActivity() {
         private const val DISPLACEMENT = 10 // 1 km
         const val RUN_TIME_PERMISSION_CODE = 999
         var gpsState :Boolean= false
-        public var contributte: Boolean? = null
+        public var contribute: Boolean? = null
     }
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -111,8 +101,7 @@ class RegistroActivity : AppCompatActivity() {
             validarRegistro2()
         }
         btn_regresar.setOnClickListener {
-            var i =Intent(this.applicationContext,ColaborationActivity::class.java)
-            startActivity(i)
+            ForegroundService.stopService(this)
         }
     }
     fun bindStoService()
@@ -126,6 +115,7 @@ class RegistroActivity : AppCompatActivity() {
         else
         {
             Log.d("NELPASTEL","NO")
+            //ForegroundService.startService(this," ")
         }
     }
     override fun onStart() {
@@ -306,7 +296,8 @@ class RegistroActivity : AppCompatActivity() {
         Log.d("Ubicacion", ubicacion.toString())
         return ubicacion
     }
-    fun wantsToConttribute() :Boolean{
+
+    fun wantsToConttribute(point : LatLng?, nearPoints: MutableList<Muestra>, needsValidation: Boolean) :Boolean{
         var answer = false
         //Ask user if wants to contributte
         val builder = AlertDialog.Builder(this@RegistroActivity)
@@ -329,11 +320,21 @@ class RegistroActivity : AppCompatActivity() {
                 bindStoService()
                 if(isBound)
                 {
-                    myService!!.startContributtion()
+                    //myService!!.setUserResponse(true)
+                    if(needsValidation)
+                    myService!!.setUserResponse(true)
+                    else
+                        myService!!.setContributing()
+                }
+                else
+                {
+                    ForegroundService.startService(this,"Registrando colaboración...",point!!, ArrayList(nearPoints),false )
+                    bindStoService()
+                    myService!!.setContributing()
+
+                    //bindStoService()
                 }
                 answer=true
-
-
             }
         )
         builder.setNegativeButton("NO") { _, _ ->
@@ -360,14 +361,14 @@ class RegistroActivity : AppCompatActivity() {
             isBound = false
         }
     }
-    fun sendReg(point: LatLng, sample: Int) {
+    fun sendReg(point: LatLng, sample: Int, type: String) {
 
         val myFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy/HH:mm:ss")
         var rdata = regData(
             point.latitude.toString() + "," + point.longitude.toString(),
             LocalDateTime.now().format(myFormat).toString(),
             ruta.toString(),
-            "-", sample
+            type, sample
             //nearPoints[0].index
         )
         Log.d("JSON", Gson().toJson(rdata))
@@ -395,16 +396,22 @@ class RegistroActivity : AppCompatActivity() {
                 true,
                 25.0
             )
+            //NO AMBIGUICY
             if (nearPoints != null && nearPoints.size == 1) {
-                sendReg(lastLocation!!,nearPoints[0].index)
-                wantsToConttribute()
+                ForegroundService.startService(this,"We All Are Bus en ejecución",nearPoints[0].point!!,ArrayList(nearPoints!!),false)
+                bindStoService()
+                sendReg(lastLocation!!,nearPoints[0].index, regData.TYPE_FISRT_NO_AMBIGUITY)
+                Log.d("Gracias","Fin")
+                wantsToConttribute(lastLocation!!, nearPoints,false)
             }
             else if(nearPoints.size>1)
             {
                 if(checkGpsSetting())
                 {
-                    wantsToConttribute()
+                    wantsToConttribute(lastLocation!!, nearPoints,true)
+                    //ForegrounService receive true in action parameter if the service needs to validate
                     ForegroundService.startService(this,"Validando tu registro... ",lastLocation!!,ArrayList(nearPoints),true)
+                    bindStoService()
                 }
             }
             else
@@ -413,7 +420,7 @@ class RegistroActivity : AppCompatActivity() {
                 // Set the alert dialog title
                 builder.setTitle("Error")
                 // Display a message on alert dialog
-                builder.setMessage("Parece que tu ubicación no coincide con ninguna ruta")
+                builder.setMessage("Parece que tu ubicación no coincide con la ruta seleccionada. Asegurate de estar dentro de la trayectoria del camión de la ruta "+Ruta.getName())
                 // Display a neutral button on alert dialog
                 builder.setNeutralButton("OK"){_,_ ->
                     Toast.makeText(applicationContext,"OK.",Toast.LENGTH_SHORT).show()
@@ -432,7 +439,7 @@ class RegistroActivity : AppCompatActivity() {
     }
     inner class broadcast : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            finish()
+           // finish()
         }
 
 

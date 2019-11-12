@@ -14,12 +14,6 @@ import kotlinx.android.synthetic.main.fragment_opciones_sheet_ex.*
 import kotlinx.android.synthetic.main.fragment_opciones_sheet_ex.view.*
 import java.lang.ClassCastException
 
-
- // TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
 /**
  * A simple [Fragment] subclass.
  * Activities that contain this fragment must implement the
@@ -45,14 +39,11 @@ class opcionesSheetEx : BottomSheetDialogFragment() {
         val intentMap: Intent = Intent(this.context,mapasVista::class.java)
         val intentReg: Intent =  Intent(this.context,RegistroActivity::class.java)
         v.registroTextView.setOnClickListener {
-
-            Toast.makeText(v.context, "Posicion a redireccionar: "+posicion.toString(), Toast.LENGTH_SHORT).show();
             startActivity(intentReg)
             dismiss()
         }
         v.mapaTextView.setOnClickListener {
             startActivity(intentMap)
-            //intent.putExtra("ruta",posicion.toString())
             dismiss()
         }
         return v

@@ -358,17 +358,17 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
             }
             17->
             {
-                getSupportActionBar()!!.setTitle(R.string.rtyl)
+                getSupportActionBar()!!.setTitle(R.string.rtdg)
                 agregarPolilinea(Ruta.rutaTyL.polilinea)
                 agregarmarcadores(Paradas.getRTyL(), R.drawable.ic_mrtdg)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getRTyL().get(0), 13f))
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getRTdG().get(0), 13f))
             }
             18->
             {
-                getSupportActionBar()!!.setTitle(R.string.rtdg)
+                getSupportActionBar()!!.setTitle(R.string.rtyl)
                 agregarPolilinea(Ruta.rutaTdG.polilinea)
-                agregarmarcadores(Paradas.getRTdG(), R.drawable.ic_mr1)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getRTdG().get(0), 13f))
+                agregarmarcadores(Paradas.getRTdG(), R.drawable.ic_mrtdg)
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getRTyL().get(0), 13f))
             }
 
 
