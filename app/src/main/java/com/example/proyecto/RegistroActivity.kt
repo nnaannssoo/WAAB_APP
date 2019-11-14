@@ -12,7 +12,6 @@ import android.util.Log
 import android.widget.Toast
 import com.example.proyecto.MainActivity.Companion.ruta
 import com.example.proyecto.Ruta.Companion.getNameFile
-import com.example.proyecto.google.ForegroundService
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -48,7 +47,7 @@ class RegistroActivity : AppCompatActivity() {
     lateinit var retrofit: Retrofit
     private var myService : ForegroundService? = null
     private var isBound= false
-    private lateinit var registerService: RegisterService
+    private var receiver = broadcast()
     val REQUEST_CODE_LOCATION = 1
     companion object {
         private const val UPDATE_INTERVAL = 600000 // 10 min
@@ -98,11 +97,15 @@ class RegistroActivity : AppCompatActivity() {
                 {
                     y =getUbicacion()
                 }
-            validarRegistro2()
+            validarRegistro()
         }
         btn_regresar.setOnClickListener {
             ForegroundService.stopService(this)
         }
+        var filter = IntentFilter()
+        filter.addAction("com.example.proyecto.UNBIND");
+        registerReceiver(receiver, IntentFilter(
+                ForegroundService.BROADCAST_ACTION))
     }
     fun bindStoService()
     {
@@ -110,12 +113,20 @@ class RegistroActivity : AppCompatActivity() {
         bindService(intent, myConnection, Context.BIND_AUTO_CREATE)
         if(isBound)
         {
-            Log.d("ENLAZADO","SI")
+            Log.d("Servicio enlazado ","BindtoService RegistroActivity")
         }
         else
         {
-            Log.d("NELPASTEL","NO")
+            Log.d("Servicio no enlazado","BindtoService RegistroActivity")
             //ForegroundService.startService(this," ")
+        }
+    }
+    fun unBindService()
+    {
+        if(isBound) {
+            Log.d("Desenlaza el servicio", "unBindService RegistroActivity")
+            unbindService(myConnection)
+            isBound = false
         }
     }
     override fun onStart() {
@@ -293,7 +304,7 @@ class RegistroActivity : AppCompatActivity() {
             }
             // StopUpdateLocations()
         }
-        Log.d("Ubicacion", ubicacion.toString())
+        Log.d("Ubicacion  @getUbicacion RegistroActivity", ubicacion.toString())
         return ubicacion
     }
 
@@ -315,7 +326,7 @@ class RegistroActivity : AppCompatActivity() {
                 Toast.makeText(
                     applicationContext,
                     "Gracias por contribuir, no olvides REGISTRAR tu BAJADA",
-                    Toast.LENGTH_SHORT
+                    Toast.LENGTH_LONG
                 ).show()
                 bindStoService()
                 if(isBound)
@@ -339,6 +350,7 @@ class RegistroActivity : AppCompatActivity() {
         )
         builder.setNegativeButton("NO") { _, _ ->
             Toast.makeText(applicationContext, "Gracias, hasta la próxima", Toast.LENGTH_SHORT).show()
+            unBindService()
             answer = false
         }
         // Finally, make the alert dialog using builder
@@ -384,7 +396,7 @@ class RegistroActivity : AppCompatActivity() {
             }
         })
     }
-    public fun validarRegistro2() {
+    public fun validarRegistro() {
         if(ubicacion!=null) {
             var samples = loadSamples(getNameFile())
             val lastLocation = getUbicacion() //La ubicacion del usuario
@@ -439,7 +451,11 @@ class RegistroActivity : AppCompatActivity() {
     }
     inner class broadcast : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-           // finish()
+            Log.d("Si entra aqui", "452 RegistroActivity")
+                Toast.makeText(context, "Llegó el Broadcast", Toast.LENGTH_SHORT).show()
+            unBindService()
+
+
         }
 
 

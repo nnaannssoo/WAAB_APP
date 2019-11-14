@@ -2,15 +2,12 @@
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.support.design.widget.BottomSheetDialogFragment
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
-import kotlinx.android.synthetic.main.fragment_opciones_sheet_ex.*
 import kotlinx.android.synthetic.main.fragment_opciones_sheet_ex.view.*
 import java.lang.ClassCastException
 

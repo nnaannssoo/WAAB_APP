@@ -52,26 +52,18 @@
 		<activity android:name=".MainActivity">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN"/>
-
 				<category android:name="android.intent.category.LAUNCHER"/>
 			</intent-filter>
 		</activity>
-		<activity android:name="com.example.proyecto.ColaborationActivity">
+		<receiver android:name="com.example.proyecto.RegistroActivity$broadcast"
+				  android:enabled="true">
 			<intent-filter>
-				<action android:name="android.intent.action.MAIN"/>
-
-				<category android:name="android.intent.category.LAUNCHER"/>
+				<action android:name="com.example.proyecto.UNBIND"/>
 			</intent-filter>
-		</activity>
 
-		<receiver android:name=".LocationService">
-			<intent-filter>
-				<action android:name="android.intent.action.LOCATION"/>
-				<category android:name="android.intent.category.LAUNCHER"/>
-			</intent-filter>
 		</receiver>
 		<service
-				android:name=".google.ForegroundService"
+				android:name=".ForegroundService"
 				android:enabled="true"
 				android:exported="true"
 				 />
