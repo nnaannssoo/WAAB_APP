@@ -4,8 +4,9 @@ import android.app.*
 import android.support.v4.content.ContextCompat
 import android.content.Context
 import android.content.Intent
-import android.drm.DrmStore.Playback.STOP
+import android.content.SharedPreferences
 import android.os.*
+import android.preference.PreferenceManager.getDefaultSharedPreferences
 import android.support.v4.app.NotificationCompat
 import android.support.v4.app.NotificationManagerCompat
 import android.util.Log
@@ -31,7 +32,6 @@ class ForegroundService : Service() {
     private val CHANNEL_ID = "WAAB en ejecucion"
     private val CHANNEL_ID_2 = "Validación de registros"
     private val CHANNEL_ID_3 = "Contribucion durant el viaje"
-
     private var  STATE = ""
     private final val stateValidating = "VALIDATING"
     private final val stateContributing = "CONTRIBUTING"
@@ -59,14 +59,18 @@ class ForegroundService : Service() {
         lateinit var serviceApi: ApiService
         lateinit var retrofit: Retrofit
         var validated : Boolean? = false
-        final val BROADCAST_ACTION = "com.proyecto.UNBIND"
-        private final val STOP_ACTION = "STOP SERVICE FROM NOTIFICACION"
-        private final val START_ACTION = "START SERVICE"
-        fun startService(context: Context, message: String, point: LatLng, nearPoints :ArrayList<Muestra>?, validated : Boolean) {
+        val BROADCAST_ACTION_UNBIND = "com.service.UNBIND"
+        val BROADCAST_ACTION_DISMISS = "com.service.DISMISS"
+        val BROADCAST_ACTION_SPLASH = "com.service.SPLASH"
+        val BROADCAST_ACTION_VALIDATING = "com.service.VALIDATING"
+        val BROADCAST_ACTION_STOPPED_SERVICE = "com.service.STOPPED"
+        private val STOP_ACTION = "STOP SERVICE FROM NOTIFICACION"
+        private val START_ACTION = "START SERVICE"
+        fun startService(context: Context, message: String, point: LatLng, nearPoints :ArrayList<Muestra>?, needsToValidate : Boolean) {
             val startIntent = Intent(context, ForegroundService::class.java)
             startIntent.action= START_ACTION
             startIntent.putExtra("inputExtra", message)
-            startIntent.putExtra("validation",validated)
+            startIntent.putExtra("validation",needsToValidate)
             startIntent.putExtra("point",point)
             startIntent.putParcelableArrayListExtra("nearPoints",(ArrayList<Muestra>(nearPoints)))
 
@@ -82,8 +86,8 @@ class ForegroundService : Service() {
         fun stopService(context: Context) {
             val stopIntent = Intent(context, ForegroundService::class.java)
             context.stopService(stopIntent)
+            RegistroActivity.setContributingFlagSharedPreferences(false,context)
             Log.d("stopService @ForegroundService","Service off")
-
         }
     }
      private fun createLocationRequest() {
@@ -128,18 +132,8 @@ class ForegroundService : Service() {
     {
         STATE= this.stateNone
     }
-    public fun startContribution()
-    {
-        Log.d("Foreground Service", "Comenzó la contribución")
-    }
     private fun validateFirst() {
         samples = loadSamples(Ruta.getNameFile())
-        Handler().postDelayed(Runnable {
-            if(validated==false || validated==null) {
-                validatedDialog(ERROR_CODE)
-            }
-        },120000)
-        locationRequest.setExpirationDuration(120000)//300000)//3 min
                 var newLocation = currentLlocation
                 var distance = SphericalUtil.computeDistanceBetween(newLocation, firstLocation)
                     if (distance >= 50 && intents<4) {
@@ -193,10 +187,8 @@ class ForegroundService : Service() {
                             if(intents>=4)
                             {
                                 Log.d("ACTUALIZACION NO Y STOP","stop")
-                               // stopService(applicationContext)
-                                //validatedDialog(ERROR_CODE)
-                                StopUpdateLocations()
-                                ForegroundService.stopService(applicationContext)
+                                validatedDialog(ERROR_CODE)
+                               killService()
                             }
                         }
                     }
@@ -210,26 +202,39 @@ class ForegroundService : Service() {
                             Log.d("ERROR", "NO NEW NEAR POINTS")
                           // fusedLocationClient.removeLocationUpdates(locationCallback)
                            //stopService(applicationContext)
-                            //validatedDialog(ERROR_CODE)
-                            StopUpdateLocations()
-                            ForegroundService.stopService(applicationContext)
+                            validatedDialog(ERROR_CODE)
+                            killService()
 
                         }
                     }
                 }
-                if(intents>=4 && validated== false)
-                {
-                    Log.d("NO pudo validar nunca ",intents.toString())
-                    //validatedDialog(ERROR_CODE)
-                    StopUpdateLocations()
-                    ForegroundService.stopService(applicationContext)
 
-                }
+    }
+    fun killService()
+    {
+        broadcastIntentUnbind()
+        StopUpdateLocations()
+        stopService(applicationContext)
 
     }
     fun broadcastIntentUnbind() {
+        intent!!.action= BROADCAST_ACTION_UNBIND
+        sendBroadcast(intent)
+
+    }
+   /* fun broadcastIntentDismiss() {
+        intent!!.action= BROADCAST_ACTION_DISMISS
         sendBroadcast(intent)
     }
+    */fun broadcastIntentSplash() {
+        intent!!.action= BROADCAST_ACTION_SPLASH
+        sendBroadcast(intent)
+    }/*
+    fun broadcastIntentValidating() {
+        intent!!.action= BROADCAST_ACTION_VALIDATING
+        sendBroadcast(intent)
+
+    }*/
     private fun StartUpdateLocations() {
         try {
             fusedLocationClient.requestLocationUpdates(locationRequest,locationCallback, Looper.myLooper())
@@ -238,7 +243,7 @@ class ForegroundService : Service() {
             Log.d("Error",unlikely.toString())
         }
     }
-    private fun StopUpdateLocations()
+    public fun StopUpdateLocations()
     {
         fusedLocationClient.removeLocationUpdates(locationCallback)
         broadcastIntentUnbind()
@@ -246,7 +251,7 @@ class ForegroundService : Service() {
     fun validatedDialog(code : Int)
     {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(CHANNEL_ID_2, "Validation Channel",
+            val serviceChannel = NotificationChannel(CHANNEL_ID_2, "We All Ae Bus...Validación",
                 NotificationManager.IMPORTANCE_DEFAULT)
 
             val manager = getSystemService(NotificationManager::class.java)
@@ -276,7 +281,14 @@ class ForegroundService : Service() {
     {
         var stopSelfIntent =  Intent(this, ForegroundService::class.java)
         stopSelfIntent.action= STOP_ACTION
-        var btPendingIntent = PendingIntent.getForegroundService( this, 0  ,stopSelfIntent,PendingIntent.FLAG_UPDATE_CURRENT ) ;
+        var btPendingIntent = PendingIntent.getForegroundService( this, 0  ,stopSelfIntent,PendingIntent.FLAG_UPDATE_CURRENT )
+
+        val notificationIntent = Intent(this, RegistroActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0, notificationIntent, 0
+        )
+
         this.notification= NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_bus)
             .setOnlyAlertOnce(true)
@@ -284,12 +296,20 @@ class ForegroundService : Service() {
             .setColor(getColor(R.color.notificationColaboration))
             .setContentTitle("We All Are Bus")
             .setContentText(message)
+            .setContentIntent(pendingIntent)
             .addAction(R.drawable.ic_launcher_foreground , "Detener colaboración" , btPendingIntent)
             .build()
         val manager = getSystemService(NotificationManager::class.java)
         manager.notify(1,notification);
 
 
+    }
+    private fun setContributingFlagSharedPreferences(flag: Boolean)
+    {
+        var preferences = getDefaultSharedPreferences(this)
+        var editor :SharedPreferences.Editor = preferences.edit();
+        editor.putBoolean("contributing", true)
+        editor.commit()
     }
     fun contributingDialog()
     {
@@ -300,12 +320,17 @@ class ForegroundService : Service() {
             val manager = getSystemService(NotificationManager::class.java)
             manager!!.createNotificationChannel(serviceChannel)
         }
-
+            val notificationIntent = Intent(this, RegistroActivity::class.java)
+            val pendingIntent = PendingIntent.getActivity(
+            this,
+            0, notificationIntent, 0
+            )
             notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID_3)
                 .setContentTitle("We All Are Bus")
                 .setColorized(true)
                 .setColor(getColor(R.color.secondaryLightColor))
                 .setContentText("Contribuyendo con mi viaje")
+                .setContentIntent(pendingIntent)
                 .setSmallIcon(R.drawable.ic_ok)
                 .build()
 
@@ -326,57 +351,26 @@ class ForegroundService : Service() {
                 currentLlocation = LatLng(location.latitude, location.longitude)
                 //checkState
                 Log.d("State on LocationCallBack Service: ",STATE)
-                if(needsValidation!!)
+                if (STATE == stateValidating)
                 {
-                    if (STATE == stateValidating)
+                    if(!validated!!)
+                    validateFirst()
+                }
+                if(STATE==stateNone)
+                {
+                   // broadcastIntentValidating()
+                    if(userResponse!!)
                     {
-                        if(!validated!!)
-                        validateFirst()
-                        else if(userResponse!!)
-                        {
-                            STATE = stateContributing
-                        }
-                        else
-                        {
-                            //Matar el servicio
-                            Log.d("AQUI MATA", "335")
-                            StopUpdateLocations()
-                            stopService(applicationContext)
-                        }
-
-
-                    }
-                    if(STATE==stateContributing)
-                    {
-                        //Cambiar el contenido de la notificacion
-                        changeNotificationContent("Contribuyendo con mi viaje ...")
-                        validateAndSend()
-                    }
-                    if(STATE==stateNone)
-                    {
-                        if(userResponse!!)
-                        {
-                            changeNotificationContent("Contribuyendo con mi viaje ...")
-                            STATE = stateContributing
-                        }
-                        else
-                        {
-                            //Matar el servicio //No uhubo contribucion
-                            Log.d("Usuario no quiere contribuir", "ForegroundService 355")
-                            StopUpdateLocations()
-                            stopService(applicationContext)
-
-                        }
+                        STATE = stateContributing
                     }
                 }
-                else
+                if(STATE==stateContributing)
                 {
-                    if(STATE==stateContributing)
-                    {
-                        startContribution()
-                    }
+                    RegistroActivity.setContributingFlagSharedPreferences(true,applicationContext)
+                    changeNotificationContent("Contribuyendo con mi viaje ...")
+                    validateAndSend()
+                    broadcastIntentSplash()
                 }
-
             }
         }
     }
@@ -408,9 +402,8 @@ class ForegroundService : Service() {
                     } else {
                         // Not valid, notify the user and then, stop service
                         //validatedDialog(this.ERROR_CODE)
-                        Log.d("Aqui se muere el servicio", "Muere durante la colaboracion 411")
-                        stopService(applicationContext)
-                        StopUpdateLocations()
+                        Log.d("Aqui se muere el servicio", "Muere durante la colaboracion 459")
+                        killService()
                     }
                 }
             }
@@ -418,9 +411,8 @@ class ForegroundService : Service() {
             {
                 // Not valid, notify the user, stop service
                 //validatedDialog(this.ERROR_CODE)
-                Log.d("Aqui se muere el servicio", "Muere durante la colaboracion 421")
-                stopService(applicationContext)
-                StopUpdateLocations()
+                Log.d("Aqui se muere el servicio", "Muere durante la colaboracion 469")
+                killService()
             }
 
         }
@@ -459,17 +451,16 @@ class ForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         //do heavy work on a background thread
         //builLocationCallback()
-        createLocationRequest()
         if(intent!!.action.equals(STOP_ACTION))
         {
             Log.d("STOP","onStartCommand")
-            Companion.stopService(this)
-            StopUpdateLocations()
-            broadcastIntentUnbind()
+            killService()
+            //broadcastIntentDismiss()
         }
         else {
             Log.d("START","onStartCommand")
-            this.intent = Intent(BROADCAST_ACTION)
+            //setContributingFlagSharedPreferences(true)
+            this.intent = Intent()
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
             val input = intent?.getStringExtra("inputExtra")
             firstLocation = intent?.getParcelableExtra("point") as LatLng
@@ -477,24 +468,21 @@ class ForegroundService : Service() {
             needsValidation = intent?.getBooleanExtra("validation", false)
             if (needsValidation!!) {
                 STATE = stateValidating
-                Handler().postDelayed(Runnable {
-                    if (validated == false) {
-                        //Time exceeded
-                        Log.d("Time Exceeded", "OnStartComand ")
-                        StopUpdateLocations()
-                        ForegroundService.stopService(applicationContext)
-                        validatedDialog(ERROR_CODE)
-                    }
-                }, 20000) //2mins
             } else {
                 STATE = stateNone
                 firstIndex = nearPoints!![0].index
-                Handler().postDelayed(Runnable {
-                    Log.d("Time Exceeded", "OnStartComand 480 ")
-                    StopUpdateLocations()
-                    ForegroundService.stopService(applicationContext)
-                }, 15000) //30 Sef
+                validated=true
             }
+            Handler().postDelayed(Runnable {
+                if (validated == false || userResponse==false) {
+                    //Time exceeded
+                    Log.d("Time Exceeded", "OnStartComand ")
+                    validatedDialog(ERROR_CODE)
+                    killService()
+
+                }
+            }, 120000) //2mins
+
             //val colaboration: Boolean = intent?.getBooleanExtra("colaboration",false)
             createNotificationChannel()
             val notificationIntent = Intent(this, RegistroActivity::class.java)
@@ -510,6 +498,7 @@ class ForegroundService : Service() {
                 .setSmallIcon(R.drawable.ic_bus)
                 .setContentIntent(pendingIntent)
                 .build()
+            createLocationRequest()
             buildLocationCallback()
             StartUpdateLocations()
             /* if(validation)
@@ -524,7 +513,7 @@ class ForegroundService : Service() {
     }
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(CHANNEL_ID, "Foreground Service Channel",
+            val serviceChannel = NotificationChannel(CHANNEL_ID, "We all are bus... En acción",
                 NotificationManager.IMPORTANCE_DEFAULT)
 
             val manager = getSystemService(NotificationManager::class.java)

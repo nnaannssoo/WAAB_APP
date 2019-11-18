@@ -6,8 +6,16 @@
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
 		tools:context=".RegistroActivity">
+	<android.support.constraint.ConstraintLayout
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:id="@+id/layoutFragment"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent">
+
+	</android.support.constraint.ConstraintLayout>
 	<LinearLayout
 			android:orientation="vertical"
+			android:id="@+id/LinearLayoutRegistro"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent">
 		<TextView
@@ -53,5 +61,6 @@
 					android:layout_height="78dp" android:id="@+id/btn_regresar" android:layout_weight="0.5"
 					android:background="#74FD2929"/>
 		</LinearLayout>
+
 	</LinearLayout>
 </android.support.constraint.ConstraintLayout>

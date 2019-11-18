@@ -6,9 +6,14 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.IBinder
 import android.os.Looper
+import android.preference.PreferenceManager
+import android.preference.PreferenceManager.getDefaultSharedPreferences
+import android.support.constraint.ConstraintLayout
 import android.support.v4.app.ActivityCompat
+import android.support.v4.app.FragmentManager
 import android.support.v7.app.AlertDialog
 import android.util.Log
+import android.widget.LinearLayout
 import android.widget.Toast
 import com.example.proyecto.MainActivity.Companion.ruta
 import com.example.proyecto.Ruta.Companion.getNameFile
@@ -27,15 +32,24 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.lang.Exception
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+import kotlin.Exception
 import kotlin.collections.ArrayList
 import com.google.maps.android.PolyUtil as PolyUtil1
 
 private const val LOCATION_PERMISSION_REQUEST_CODE = 1
-class RegistroActivity : AppCompatActivity() {
+class RegistroActivity : AppCompatActivity(), CancelListener
+{
+    override fun onCancelListener() {
+        Log.d("Cancelar","Servicio desde Fragment")
+        if(isBound)
+            myService!!.StopUpdateLocations()
+        unBindService()
+        ForegroundService.stopService(this)
+        finish()
+    }
 
     private lateinit var map: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -47,6 +61,8 @@ class RegistroActivity : AppCompatActivity() {
     lateinit var retrofit: Retrofit
     private var myService : ForegroundService? = null
     private var isBound= false
+    private var isRegisterded= false
+    private lateinit var LL: LinearLayout
     private var receiver = broadcast()
     val REQUEST_CODE_LOCATION = 1
     companion object {
@@ -55,19 +71,32 @@ class RegistroActivity : AppCompatActivity() {
         private const val DISPLACEMENT = 10 // 1 km
         const val RUN_TIME_PERMISSION_CODE = 999
         var gpsState :Boolean= false
-        public var contribute: Boolean? = null
+        lateinit var preferences : SharedPreferences
+        fun setContributingFlagSharedPreferences(flag: Boolean, context : Context)
+        {
+            preferences = PreferenceManager.getDefaultSharedPreferences(context)
+            var editor :SharedPreferences.Editor = preferences.edit()
+            editor.putBoolean("contributing", flag)
+            editor.apply()
+        }
+        fun getContributingFlagSharedPreferences():Boolean
+        {
+            return preferences.getBoolean("contributing", false)
+        }
     }
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registro)
-        mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(OnMapReadyCallback {
-            map = it
-            map.uiSettings.isZoomControlsEnabled = true
-            map.uiSettings.isMyLocationButtonEnabled = true
-        })
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+            preferences = getDefaultSharedPreferences(this)
+            mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+            mapFragment.getMapAsync(OnMapReadyCallback {
+                map = it
+                map.uiSettings.isZoomControlsEnabled = true
+                map.uiSettings.isMyLocationButtonEnabled = true
+            })
+            LL = LinearLayoutRegistro
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
             buildLocationRequest(5000, 10000, 10f)
             buildLocationCallback()
             checkGpsSetting()
@@ -75,37 +104,65 @@ class RegistroActivity : AppCompatActivity() {
             getUbicacion()
             if (ubicacion != null)
                 StopUpdateLocations()
-        retrofit = Retrofit.Builder()
-            .baseUrl("http://148.204.142.162:3031/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        serviceApi = retrofit.create<ApiService>(ApiService::class.java)
-        btn_actualizar.setOnClickListener {
-            StartUpdateLocations()
-            //locationRequest.setSmallestDisplacement(10.0f)
-            Thread.sleep(1000)
-            getUbicacion()
-            StopUpdateLocations()
-        }
-        btn_confirmar.setOnClickListener {
-            //validarRegistro()
-            var y = getUbicacion()
-            if(y==null)
-            //ForegroundService.startService(this,"Servicio corriendo",y!!)
-                checkGpsSetting()
-                if(gpsState)
-                {
-                    y =getUbicacion()
+            retrofit = Retrofit.Builder()
+                .baseUrl("http://148.204.142.162:3031/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+            serviceApi = retrofit.create<ApiService>(ApiService::class.java)
+            btn_actualizar.setOnClickListener {
+                StartUpdateLocations()
+                //locationRequest.setSmallestDisplacement(10.0f)
+                Thread.sleep(1000)
+                getUbicacion()
+                StopUpdateLocations()
+            }
+            btn_confirmar.setOnClickListener {
+                //validarRegistro()
+                var y = getUbicacion()
+                if (y == null)
+                    checkGpsSetting()
+                if (gpsState) {
+                    y = getUbicacion()
                 }
-            validarRegistro()
-        }
-        btn_regresar.setOnClickListener {
-            ForegroundService.stopService(this)
-        }
-        var filter = IntentFilter()
-        filter.addAction("com.example.proyecto.UNBIND");
-        registerReceiver(receiver, IntentFilter(
-                ForegroundService.BROADCAST_ACTION))
+                validarRegistro()
+            }
+            btn_regresar.setOnClickListener {
+                //ForegroundService.stopService(this)
+                // 3
+            }
+
+    }
+
+    fun registerBroadcast()
+    {
+        /*var filter = IntentFilter()
+        filter.addAction( ForegroundService.BROADCAST_ACTION_UNBIND)
+        filter.addAction( ForegroundService.BROADCAST_ACTION_SPLASH)*/
+        registerReceiver(
+            receiver, IntentFilter(
+                ForegroundService.BROADCAST_ACTION_UNBIND
+            )
+        )
+        registerReceiver(
+            receiver, IntentFilter(
+                ForegroundService.BROADCAST_ACTION_SPLASH
+            )
+        )
+        isRegisterded=true
+    }
+    fun unRegisterBroadcast()
+    {
+            if (isRegisterded) {
+                Log.d("Si entra", "UNREGISTER BROADCAST")
+                unregisterReceiver(receiver)
+            }
+
+    }
+    override fun onPause() {
+        super.onPause()
+        unRegisterBroadcast()
+
+
     }
     fun bindStoService()
     {
@@ -121,6 +178,21 @@ class RegistroActivity : AppCompatActivity() {
             //ForegroundService.startService(this," ")
         }
     }
+    fun showContributingFragment()
+    {
+        LL.visibility=LinearLayout.GONE
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.layoutFragment,ContributingFragment())
+            .commit()
+    }
+    fun dismissContributingFragment()
+    {
+        LL.visibility=LinearLayout.VISIBLE
+        layoutFragment.visibility=ConstraintLayout.GONE
+        supportFragmentManager.beginTransaction()
+            .remove(ContributingFragment())
+            .commit()
+    }
     fun unBindService()
     {
         if(isBound) {
@@ -129,16 +201,46 @@ class RegistroActivity : AppCompatActivity() {
             isBound = false
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        registerBroadcast()
+        bindStoService()
+        if (getContributingFlagSharedPreferences()) {
+            showContributingFragment()
+        }
+        else {
+            LL.visibility= LinearLayout.VISIBLE
+            checkGpsSetting()
+            getUbicacion()
+            var hora = LocalDateTime.now()
+            StopUpdateLocations()
+        }
+    }
     override fun onStart() {
         super.onStart()
-        checkGpsSetting()
-        getUbicacion()
-        var hora = LocalDateTime.now()
-        StopUpdateLocations()
+        bindStoService()
+        //registerBroadcast()
+        if (getContributingFlagSharedPreferences()) {
+            showContributingFragment()
+        }
+        else {
+            LL.visibility= LinearLayout.VISIBLE
+            checkGpsSetting()
+            getUbicacion()
+            var hora = LocalDateTime.now()
+            StopUpdateLocations()
+        }
     }
+
 
     override fun onStop() {
         super.onStop()
+        if (isBound) {
+            unbindService(myConnection)
+            isBound = false
+        }
+        //unRegisterBroadcast()
         try {
             StopUpdateLocations()
         } catch (c: Exception) {
@@ -152,6 +254,7 @@ class RegistroActivity : AppCompatActivity() {
             REQUEST_CODE_LOCATION -> {
                 if (grantResults.size > 0) {
                     if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        getUbicacion()
                         Toast.makeText(this, "Todo bien con la ubicacion", Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(this, "No jala la ubicacion", Toast.LENGTH_SHORT).show()
@@ -171,6 +274,7 @@ class RegistroActivity : AppCompatActivity() {
                 // All location settings are satisfied. The client can initialize location
                 // requests here.
                 gpsState= true
+                getUbicacion()
             } catch (exception: ApiException) {
                 when (exception.statusCode) {
                     LocationSettingsStatusCodes.RESOLUTION_REQUIRED -> {
@@ -329,22 +433,13 @@ class RegistroActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG
                 ).show()
                 bindStoService()
-                if(isBound)
+                if(!isBound)
                 {
-                    //myService!!.setUserResponse(true)
-                    if(needsValidation)
-                    myService!!.setUserResponse(true)
-                    else
-                        myService!!.setContributing()
-                }
-                else
-                {
-                    ForegroundService.startService(this,"Registrando colaboración...",point!!, ArrayList(nearPoints),false )
+                    ForegroundService.startService(this,"Registrando colaboración...",point!!, ArrayList(nearPoints),needsValidation )
                     bindStoService()
-                    myService!!.setContributing()
-
                     //bindStoService()
                 }
+                myService!!.setUserResponse(true)
                 answer=true
             }
         )
@@ -452,9 +547,15 @@ class RegistroActivity : AppCompatActivity() {
     inner class broadcast : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             Log.d("Si entra aqui", "452 RegistroActivity")
-                Toast.makeText(context, "Llegó el Broadcast", Toast.LENGTH_SHORT).show()
-            unBindService()
-
+            Toast.makeText(context, "Llegó el Broadcast", Toast.LENGTH_SHORT).show()
+            if(intent!!.action.equals(ForegroundService.BROADCAST_ACTION_UNBIND)){
+                dismissContributingFragment()
+                unBindService()
+            }
+            else if(intent!!.action.equals(ForegroundService.BROADCAST_ACTION_SPLASH))
+            {
+                showContributingFragment()
+            }
 
         }
 
@@ -462,8 +563,3 @@ class RegistroActivity : AppCompatActivity() {
     };
 
 }
-
-
-
-
-

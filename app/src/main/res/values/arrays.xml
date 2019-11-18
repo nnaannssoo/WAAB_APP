@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="splash_array">
+        <item>En viaje</item>
+        <item>Gracias</item>
+        <item>por</item>
+        <item>contribuir</item>
+    </string-array>
+</resources>
