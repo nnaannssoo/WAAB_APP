@@ -1,22 +1,26 @@
 package com.example.proyecto
 import android.content.*
 import android.content.pm.PackageManager
+import android.location.Address
 import android.location.Geocoder
+import android.location.Location
+import android.os.*
 import android.support.v7.app.AppCompatActivity
-import android.os.Bundle
-import android.os.IBinder
-import android.os.Looper
 import android.preference.PreferenceManager
 import android.preference.PreferenceManager.getDefaultSharedPreferences
 import android.support.constraint.ConstraintLayout
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.FragmentManager
+import android.support.v4.app.JobIntentService
 import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.Toast
+import com.example.proyecto.ForegroundService.Companion.serviceApi
+import com.example.proyecto.ForegroundService.Companion.startService
 import com.example.proyecto.MainActivity.Companion.ruta
+import com.example.proyecto.RegistroActivity.Companion.TOLERANCE
 import com.example.proyecto.Ruta.Companion.getNameFile
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
@@ -32,6 +36,7 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.BufferedReader
+import java.io.IOException
 import java.io.InputStreamReader
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -65,9 +70,12 @@ class RegistroActivity : AppCompatActivity(), CancelListener
     private var isRegisterded= false
     private lateinit var LL: ConstraintLayout
     private var receiver = broadcast()
+    private lateinit var mResultReceiver: AddressResultReceiver
     private var answer: Boolean? = null
     val REQUEST_CODE_LOCATION = 1
     private var fragmentVisible= false
+    var addressOutput = ""
+
     companion object {
         const val TOLERANCE = 30.0
         private const val UPDATE_INTERVAL = 600000 // 10 min
@@ -101,11 +109,13 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         })
         LL = LinearLayoutRegistro
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        buildLocationRequest(5000, 10000, 10f)
+        buildLocationRequest(5000, 1000, 10f)
         buildLocationCallback()
         checkGpsSetting()
         StartUpdateLocations()
         getUbicacion()
+        var handler= Handler()
+        mResultReceiver= AddressResultReceiver(handler)
         if (ubicacion != null)
             StopUpdateLocations()
         retrofit = Retrofit.Builder()
@@ -356,18 +366,13 @@ class RegistroActivity : AppCompatActivity(), CancelListener
     private fun buildLocationCallback() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult?) {
-                var geocoder = Geocoder(applicationContext, Locale.getDefault())
-                var location = p0!!.locations.get(p0!!.locations.size - 1) //Ultima ubicacion
-                var aux = geocoder.getFromLocation(location.latitude, location.longitude, 2);
-                ubicacion = LatLng(location.latitude, location.longitude)
-                txt_direccion.text = aux[0].getAddressLine(0)
-                if (ubicacion != null) {
-                    //ubicacion= LatLng(22.7675,-102.572)
-                    map.clear()
+            Log.d("ENTRO AL CALLBACK","RegistroActivity")
+                   //ubicacion= LatLng(22.7675,-102.572)
+                   /* map.clear()
                     map.addMarker(MarkerOptions().position(ubicacion!!))
-                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(ubicacion!!, 18f))
-                }
-                Log.d("Si", aux[0].getAddressLine(0))
+                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(ubicacion!!, 18f))*/
+
+
             }
         }
     }
@@ -393,21 +398,16 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             if (location != null) {
                 ubicacion = LatLng(location.latitude, location.longitude)
-                var geocoder = Geocoder(applicationContext, Locale.getDefault())
+              /*  var geocoder = Geocoder(applicationContext, Locale.getDefault())
                 var aux = geocoder.getFromLocation(location.latitude, location.longitude, 2)
-                txt_direccion.text = aux[0].getAddressLine(0)
+                txt_direccion.text = aux[0].getAddressLine(0)*/
+                startIntentService(location)
                 ubicacion = LatLng(location.latitude, location.longitude)
-                txt_direccion.text = aux[0].getAddressLine(0)
-                if (ubicacion != null) {
+                //txt_direccion.text = aux[0].getAddressLine(0)
                     //ubicacion= LatLng(22.7675,-102.572)
                     map.clear()
                     map.addMarker(MarkerOptions().position(ubicacion!!))
                     map.animateCamera(CameraUpdateFactory.newLatLngZoom(ubicacion!!, 18f))
-                }
-                else{
-                    Log.d("NULLLLL","La ubicaicon es null")
-                }
-                Log.d("Si", aux[0].getAddressLine(0))
             }
             // StopUpdateLocations()
         }
@@ -543,6 +543,35 @@ class RegistroActivity : AppCompatActivity(), CancelListener
             checkGpsSetting()
         }
     }
+    private fun startIntentService(location :Location) {
+
+        val intent = Intent(this, FetchingAddress::class.java).apply {
+            putExtra(Constants.RECEIVER, mResultReceiver)
+            putExtra(Constants.LOCATION_DATA_EXTRA, location)
+        }
+        FetchingAddress.enqueueWork(this,intent)
+    }
+    internal inner class AddressResultReceiver(handler: Handler) : ResultReceiver(handler) {
+
+        override fun onReceiveResult(resultCode: Int, resultData: Bundle?){
+
+            // Display the address string
+            // or an error message sent from the intent service.
+             var addressOutput = resultData?.getString(Constants.RESULT_DATA_KEY) ?: ""
+             Log.d("Direccion",addressOutput)
+            if(addressOutput!="") {
+                var address = addressOutput.split(",")
+
+                var filteredAddress = "Calle: "+ address.get(0) +"\n"+ "Colonia: "+ address.get(2)+"\n"+addressOutput.
+                displayAddressOutput(filteredAddress)
+            }
+
+        }
+    }
+
+    private fun displayAddressOutput(addressText: String) {
+        runOnUiThread { txt_direccion.setText(addressText) }
+    }
     inner class broadcast : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             Log.d("Si entra aqui", "570 RegistroActivity")
@@ -570,8 +599,6 @@ class RegistroActivity : AppCompatActivity(), CancelListener
             }
 
         }
-
-
-    };
+    }
 
 }

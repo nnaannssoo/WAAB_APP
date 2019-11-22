@@ -29,7 +29,9 @@
     <string name="regresar">Regresar</string>
     <string name="urlApi">https://127.0.0.1/</string>
     <string name="bajar">Bajar del camión</string>
-
+    <string name="GeocoderError">"Servicio para desplegar la direccion no disponible"</string>
+    <string name="NoAddresFound">"No existe direccion"</string>
+    <string name="AddressTrouble">"Ubicacion sin direccion"</string>
     <string name="permission_rationale">Location permission is needed for core functionality</string>
     <string name="permission_denied_explanation">Permission was denied, but is needed for core
         functionality.

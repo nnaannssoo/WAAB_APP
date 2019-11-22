@@ -3,8 +3,7 @@ package com.example.proyecto
 object Constants {
     const val SUCCESS_RESULT = 0
     const val FAILURE_RESULT = 1
-    const val PACKAGE_NAME = "com.google.android.gms.location.sample.locationaddress"
-    const val RECEIVER = "$PACKAGE_NAME.RECEIVER"
-    const val RESULT_DATA_KEY = "${PACKAGE_NAME}.RESULT_DATA_KEY"
-    const val LOCATION_DATA_EXTRA = "${PACKAGE_NAME}.LOCATION_DATA_EXTRA"
+    const val RECEIVER = "FETCHING_ADDRESS_RECEIVER"
+    const val RESULT_DATA_KEY = "FETCHING_RESULT_DATA_KEY"
+    const val LOCATION_DATA_EXTRA = "FETCHING_ADDRESS_LOCATION_DATA_EXTRA"
 }
