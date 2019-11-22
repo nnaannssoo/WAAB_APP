@@ -7,37 +7,33 @@
 	<LinearLayout
 			android:orientation="vertical"
 			android:layout_width="match_parent"
-			android:layout_height="match_parent">
+			android:layout_height="match_parent"
+			android:layout_marginTop="12dp"
+			android:layout_marginBottom="12dp"
+	>
 		<TextView
-				android:text="Elige una opcion"
 				android:layout_width="match_parent"
+				android:id="@+id/registroTextView"
+				android:drawableLeft="@drawable/registriomage"
+				android:layout_margin="5dp"
+				android:drawablePadding="30dp"
+				android:text="@string/Registro"
+				android:paddingStart="12dp"
+				android:textSize="20dp"
+				android:gravity="center_vertical"
 				android:layout_height="wrap_content"
-				android:id="@+id/textViewFragment"
-				android:textSize="32dp"
-				android:textColor="#32A5A8"/>
-		<TextView
-			android:layout_width="match_parent"
-			android:id="@+id/registroTextView"
-			android:drawableLeft="@drawable/registriomage"
-			android:drawablePadding="10dp"
-			android:text="@string/Registro"
-			android:paddingStart="15dp"
-			android:paddingEnd="15dp"
-			android:textSize="25dp"
-			android:gravity="center_vertical"
-			android:layout_height="wrap_content"
-	/>
+				android:drawableTint="@color/colorPrimary"/>
 		<TextView
 				android:layout_width="match_parent"
 				android:id="@+id/mapaTextView"
 				android:drawableLeft="@drawable/mapaimage"
-				android:drawablePadding="10dp"
+				android:layout_margin="5dp"
+				android:drawablePadding="30dp"
 				android:text="@string/mapa"
-				android:paddingStart="15dp"
-				android:paddingEnd="15dp"
-				android:textSize="25dp"
+				android:paddingStart="12dp"
+				android:textSize="20dp"
 				android:gravity="center_vertical"
 				android:layout_height="wrap_content"
-		/>
+				android:drawableTint="@color/routePrimaryColor"/>
 	</LinearLayout>
 </FrameLayout>

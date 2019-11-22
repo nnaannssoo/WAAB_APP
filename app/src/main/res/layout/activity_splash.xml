@@ -11,6 +11,13 @@
         tools:context=".SplashActivity">
 
 
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+              app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent"
+              android:layout_marginStart="8dp"
+              android:layout_marginBottom="44dp"
+              app:layout_constraintBottom_toTopOf="@+id/imageView" android:text="@string/app_name"
+              android:textAppearance="@style/TEXTTITTLE" app:layout_constraintHorizontal_bias="0.476"
+              android:textColor="#000000" android:textSize="48sp"/>
     <ImageView
             android:src="@drawable/logoapp"
             android:layout_width="250dp"
@@ -19,29 +26,8 @@
             app:layout_constraintStart_toStartOf="parent" android:layout_marginStart="8dp"
             app:layout_constraintHorizontal_bias="0.496" android:layout_marginTop="200dp"
             app:layout_constraintTop_toTopOf="parent" android:layout_marginBottom="200dp"
-            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintVertical_bias="0.0"
+            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintVertical_bias="0.851"
             android:id="@+id/imageView"/>
-    <com.tomer.fadingtextview.FadingTextView
-            android:layout_width="213dp"
-            android:layout_height="106dp"
-            app:texts="@array/splash_array"
-            android:textColor="#000000"
-            android:textSize="59sp"
-            app:timeout="500"
-            android:textStyle="bold" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" android:layout_marginTop="20dp"
-            app:layout_constraintTop_toTopOf="parent" android:layout_marginBottom="8dp"
-            app:layout_constraintBottom_toTopOf="@+id/imageView"
-            style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title."/>
-    <ImageButton
-            android:layout_width="78dp"
-            android:layout_height="59dp" app:srcCompat="@drawable/ic_bad"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" android:id="@+id/cancelButton"
-            android:backgroundTint="@color/colorprimaryLight" android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@+id/imageView" android:layout_marginBottom="8dp"
-            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintHorizontal_bias="0.498"
-            app:layout_constraintVertical_bias="0.493"/>
 
 
 </android.support.constraint.ConstraintLayout>

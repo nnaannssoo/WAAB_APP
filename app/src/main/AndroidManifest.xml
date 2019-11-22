@@ -49,6 +49,7 @@
         <meta-data
 				android:name="com.google.android.geo.API_KEY"
 				android:value="@string/google_maps_key"/>
+        <meta-data android:name="preloaded_fonts" android:resource="@array/preloaded_fonts"/>
 
         <activity
 				android:name=".mapasVista"
@@ -60,8 +61,6 @@
         </activity>
         <activity android:name=".MainActivity">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>

@@ -33,12 +33,12 @@ class ForegroundService : Service() {
     private val CHANNEL_ID_2 = "Validación de registros"
     private val CHANNEL_ID_3 = "Contribucion durant el viaje"
     private var  STATE = ""
-    private final val stateValidating = "VALIDATING"
-    private final val stateContributing = "CONTRIBUTING"
-    private final val stateNone = "NONE"
-    private final val stateWaitingForValidation="WAITING"
-    private final val ERROR_CODE = 0
-    private final val  SUCCESS_CODE=1
+    private val stateValidating = "VALIDATING"
+    private val stateContributing = "CONTRIBUTING"
+    private val stateNone = "NONE"
+    private val stateWaitingForValidation="WAITING"
+    private val ERROR_CODE = 0
+    private val  SUCCESS_CODE=1
     val REQUEST_CODE_LOCATION = 1
     private lateinit var locationCallback : LocationCallback
     private lateinit var locationRequest : LocationRequest
@@ -48,9 +48,8 @@ class ForegroundService : Service() {
     private val myBinder = MyBinder()
     private var firstLocation: LatLng?= null
     private var firstIndex: Int? = null
-    private var userResponse:Boolean?=false
+    private var userResponse:Boolean?=null
     private var currentLlocation: LatLng?= null
-    private var colaboration : Boolean? = null
     private var intents=0
     private var samples : ArrayList<LatLng>? = null
     private lateinit var notification : Notification
@@ -63,7 +62,6 @@ class ForegroundService : Service() {
         val BROADCAST_ACTION_DISMISS = "com.service.DISMISS"
         val BROADCAST_ACTION_SPLASH = "com.service.SPLASH"
         val BROADCAST_ACTION_VALIDATING = "com.service.VALIDATING"
-        val BROADCAST_ACTION_STOPPED_SERVICE = "com.service.STOPPED"
         private val STOP_ACTION = "STOP SERVICE FROM NOTIFICACION"
         private val START_ACTION = "START SERVICE"
         fun startService(context: Context, message: String, point: LatLng, nearPoints :ArrayList<Muestra>?, needsToValidate : Boolean) {
@@ -73,13 +71,11 @@ class ForegroundService : Service() {
             startIntent.putExtra("validation",needsToValidate)
             startIntent.putExtra("point",point)
             startIntent.putParcelableArrayListExtra("nearPoints",(ArrayList<Muestra>(nearPoints)))
-
             retrofit = Retrofit.Builder()
                 .baseUrl("http://148.204.142.162:3031/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
             serviceApi = retrofit.create<ApiService>(ApiService::class.java)
-
             ContextCompat.startForegroundService(context, startIntent)
         }
 
@@ -90,12 +86,12 @@ class ForegroundService : Service() {
             Log.d("stopService @ForegroundService","Service off")
         }
     }
-     private fun createLocationRequest() {
+    private fun createLocationRequest() {
         locationRequest = LocationRequest()
-         locationRequest.interval = UPDATE_INTERVAL_IN_MILLISECONDS
-         locationRequest.fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
-         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-         locationRequest.smallestDisplacement = 50.0f
+        locationRequest.interval = UPDATE_INTERVAL_IN_MILLISECONDS
+        locationRequest.fastestInterval = FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS
+        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        locationRequest.smallestDisplacement = 50.0f
     }
     private fun loadSamples(nameFile: String): ArrayList<LatLng> {
         var inputStreamReader = InputStreamReader(assets.open(nameFile))
@@ -132,86 +128,93 @@ class ForegroundService : Service() {
     {
         STATE= this.stateNone
     }
+    fun getState() :String
+    {
+        return STATE
+    }
     private fun validateFirst() {
         samples = loadSamples(Ruta.getNameFile())
-                var newLocation = currentLlocation
-                var distance = SphericalUtil.computeDistanceBetween(newLocation, firstLocation)
-                    if (distance >= 50 && intents<4) {
-                    intents+= 1
-                    var newNearPoints = PolyUtil.locationIndexOnEdgeOrPathPoint(
-                        newLocation,
-                        samples,
-                        true,
-                        true,
-                        25.0
-                    )
-                    if (newNearPoints.size > 0 && newNearPoints != null) {
-                        Log.d("Nuevos Puntos", newNearPoints[0].point.toString())
-                        if (newNearPoints.size == 1) {
-                            Log.d("Envía no ambi", newNearPoints[0].point!!.toString())
-                            sendReg(newNearPoints[0].point!!, newNearPoints[0].index, regData.TYPE_FIRST_AMBIGUITY )
-                            validated = true
-                            firstIndex= newNearPoints[0].index
-                            //stopService(applicationContext)
-                            STATE= stateNone
-                            validatedDialog(SUCCESS_CODE)
-                        }
-                        else if (newNearPoints[0].index > nearPoints!![0].index) {
-                                //Bearing AB [0] = Ida
-                                //Send newNearPoints [0] to server
-                                Log.d("Envía IDA", newNearPoints[0].point!!.toString())
-                                sendReg(newNearPoints[0].point!!, newNearPoints[0].index, regData.TYPE_FIRST_AMBIGUITY)
-                                validated = true
-                            firstIndex= newNearPoints[0].index
-                            //stopService(applicationContext)
-                            STATE= stateNone
-                            validatedDialog(SUCCESS_CODE)
+        var newLocation = currentLlocation
+        var distance = SphericalUtil.computeDistanceBetween(newLocation, firstLocation)
+        if (distance >= 50 && intents<4) {
+            intents+= 1
+            var newNearPoints = PolyUtil.locationIndexOnEdgeOrPathPoint(
+                newLocation,
+                samples,
+                true,
+                true,
+                RegistroActivity.TOLERANCE
+            )
+            if (newNearPoints.size > 0 && newNearPoints != null) {
+                Log.d("Nuevos Puntos", newNearPoints[0].point.toString())
+                if (newNearPoints.size == 1) {
+                    Log.d("Envía no ambi", newNearPoints[0].point!!.toString())
+                    sendReg(newNearPoints[0].point!!, newNearPoints[0].index, regData.TYPE_FIRST_AMBIGUITY )
+                    validated = true
+                    firstIndex= newNearPoints[0].index
+                    //stopService(applicationContext)
+                    STATE= stateNone
+                    validatedDialog(SUCCESS_CODE)
+                    broadcastIntentValidating()
+                }
+                else if (newNearPoints[0].index > nearPoints!![0].index) {
+                    //Bearing AB [0] = Ida
+                    //Send newNearPoints [0] to server
+                    Log.d("Envía IDA", newNearPoints[0].point!!.toString())
+                    sendReg(newNearPoints[0].point!!, newNearPoints[0].index, regData.TYPE_FIRST_AMBIGUITY)
+                    validated = true
+                    firstIndex= newNearPoints[0].index
+                    //stopService(applicationContext)
+                    STATE= stateNone
+                    validatedDialog(SUCCESS_CODE)
+                    broadcastIntentValidating()
+                }
+                else if (newNearPoints[1].index > nearPoints!![1].index) {
+                    //Bearing AB [0] = Regreso
+                    Log.d("Envía no regreso", newNearPoints[1].point!!.toString())
+                    sendReg(newNearPoints[1].point!!, newNearPoints[1].index, regData.TYPE_FIRST_AMBIGUITY)
+                    validated = true
+                    firstIndex= newNearPoints[1].index
+                    STATE= stateNone
 
-                            }
-                        else if (newNearPoints[1].index > nearPoints!![1].index) {
-                                //Bearing AB [0] = Regreso
-                                Log.d("Envía no regreso", newNearPoints[1].point!!.toString())
-                                sendReg(newNearPoints[1].point!!, newNearPoints[1].index, regData.TYPE_FIRST_AMBIGUITY)
-                                validated = true
-                            firstIndex= newNearPoints[1].index
-                           STATE= stateNone
-
-                            //stopService(applicationContext)
-                            validatedDialog(SUCCESS_CODE)
-                            }
-                        else
-                        {
-                            Log.d("Actualización NO VALIDA: ", currentLlocation.toString())
-                            //NO NEW NEAR POINTS
-                            validated= false
-                            if(intents>=4)
-                            {
-                                Log.d("ACTUALIZACION NO Y STOP","stop")
-                                validatedDialog(ERROR_CODE)
-                               killService()
-                            }
-                        }
-                    }
-                    else
+                    //stopService(applicationContext)
+                    validatedDialog(SUCCESS_CODE)
+                    broadcastIntentValidating()
+                }
+                else
+                {
+                    Log.d("Actualización NO VALIDA: ", currentLlocation.toString())
+                    //NO NEW NEAR POINTS
+                    validated= false
+                    if(intents>=4)
                     {
-                        //ERORR
-                        validated=false
-                        Log.d("Hizo falso y los intentos ",intents.toString())
-                        if(intents>=4)
-                        {
-                            Log.d("ERROR", "NO NEW NEAR POINTS")
-                          // fusedLocationClient.removeLocationUpdates(locationCallback)
-                           //stopService(applicationContext)
-                            validatedDialog(ERROR_CODE)
-                            killService()
-
-                        }
+                        Log.d("ACTUALIZACION NO Y STOP","stop")
+                        validatedDialog(ERROR_CODE)
+                        killService()
                     }
                 }
+            }
+            else
+            {
+                //ERORR
+                validated=false
+                Log.d("Hizo falso y los intentos ",intents.toString())
+                if(intents>=4)
+                {
+                    Log.d("ERROR", "NO NEW NEAR POINTS")
+                    // fusedLocationClient.removeLocationUpdates(locationCallback)
+                    //stopService(applicationContext)
+                    validatedDialog(ERROR_CODE)
+                    killService()
+
+                }
+            }
+        }
 
     }
     fun killService()
     {
+        STATE=stateNone
         broadcastIntentUnbind()
         StopUpdateLocations()
         stopService(applicationContext)
@@ -222,19 +225,20 @@ class ForegroundService : Service() {
         sendBroadcast(intent)
 
     }
-   /* fun broadcastIntentDismiss() {
-        intent!!.action= BROADCAST_ACTION_DISMISS
-        sendBroadcast(intent)
-    }
-    */fun broadcastIntentSplash() {
+    /* fun broadcastIntentDismiss() {
+         intent!!.action= BROADCAST_ACTION_DISMISS
+         sendBroadcast(intent)
+     }
+     */
+    fun broadcastIntentSplash() {
         intent!!.action= BROADCAST_ACTION_SPLASH
         sendBroadcast(intent)
-    }/*
+    }
     fun broadcastIntentValidating() {
         intent!!.action= BROADCAST_ACTION_VALIDATING
         sendBroadcast(intent)
 
-    }*/
+    }
     private fun StartUpdateLocations() {
         try {
             fusedLocationClient.requestLocationUpdates(locationRequest,locationCallback, Looper.myLooper())
@@ -260,14 +264,14 @@ class ForegroundService : Service() {
         if(code == SUCCESS_CODE) {
             notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID_2)
                 .setContentTitle("We All Are Bus")
-                .setContentText("Validacion correcta. Gracias por contribuir")
+                .setContentText("Validación correcta. Gracias por contribuir")
                 .setSmallIcon(R.drawable.ic_ok)
                 .build()
         }
         else {
             notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID_2)
                 .setColor(getColor(R.color.notificacionError))
-                .setContentText("No pudimos validar tu registro para la ruta "+Ruta.getName())
+                .setContentText("No pudimos validar tu registro para la "+Ruta.getName())
                 .setSmallIcon(R.drawable.ic_bad)
                 .build()
         }
@@ -297,19 +301,34 @@ class ForegroundService : Service() {
             .setContentTitle("We All Are Bus")
             .setContentText(message)
             .setContentIntent(pendingIntent)
-            .addAction(R.drawable.ic_launcher_foreground , "Detener colaboración" , btPendingIntent)
+            .addAction(R.drawable.ic_launcher_foreground , "Bajar del camión" , btPendingIntent)
             .build()
         val manager = getSystemService(NotificationManager::class.java)
         manager.notify(1,notification);
 
 
     }
-    private fun setContributingFlagSharedPreferences(flag: Boolean)
+    fun changeNotificationContentWaiting()
     {
-        var preferences = getDefaultSharedPreferences(this)
-        var editor :SharedPreferences.Editor = preferences.edit();
-        editor.putBoolean("contributing", true)
-        editor.commit()
+        val notificationIntent = Intent(this, RegistroActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0, notificationIntent, 0
+        )
+
+        this.notification= NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_bus)
+            .setOnlyAlertOnce(true)
+            .setColorized(true)
+            .setColor(getColor(R.color.notificationColaboration))
+            .setContentTitle("We All Are Bus")
+            .setContentText("Esperando confirmación para colaborar...")
+            .setContentIntent(pendingIntent)
+            .build()
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.notify(1,notification)
+
+
     }
     fun contributingDialog()
     {
@@ -320,19 +339,19 @@ class ForegroundService : Service() {
             val manager = getSystemService(NotificationManager::class.java)
             manager!!.createNotificationChannel(serviceChannel)
         }
-            val notificationIntent = Intent(this, RegistroActivity::class.java)
-            val pendingIntent = PendingIntent.getActivity(
+        val notificationIntent = Intent(this, RegistroActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
             this,
             0, notificationIntent, 0
-            )
-            notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID_3)
-                .setContentTitle("We All Are Bus")
-                .setColorized(true)
-                .setColor(getColor(R.color.secondaryLightColor))
-                .setContentText("Contribuyendo con mi viaje")
-                .setContentIntent(pendingIntent)
-                .setSmallIcon(R.drawable.ic_ok)
-                .build()
+        )
+        notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID_3)
+            .setContentTitle("We All Are Bus")
+            .setColorized(true)
+            .setColor(getColor(R.color.secondaryLightColor))
+            .setContentText("Contribuyendo con mi viaje")
+            .setContentIntent(pendingIntent)
+            .setSmallIcon(R.drawable.ic_ok)
+            .build()
 
         with (NotificationManagerCompat.from(applicationContext))
         {
@@ -353,23 +372,28 @@ class ForegroundService : Service() {
                 Log.d("State on LocationCallBack Service: ",STATE)
                 if (STATE == stateValidating)
                 {
+                    broadcastIntentValidating()
                     if(!validated!!)
-                    validateFirst()
+                        validateFirst()
                 }
                 if(STATE==stateNone)
                 {
-                   // broadcastIntentValidating()
-                    if(userResponse!!)
-                    {
-                        STATE = stateContributing
+                    //broadcastIntentValidating()
+                    //changeNotificationContentWaiting()
+                    if(userResponse!=null) {
+                        if (userResponse!!)
+                            STATE = stateContributing
+                        else if (validated!! && userResponse==false)
+                            killService()
                     }
                 }
                 if(STATE==stateContributing)
                 {
                     RegistroActivity.setContributingFlagSharedPreferences(true,applicationContext)
                     changeNotificationContent("Contribuyendo con mi viaje ...")
-                    validateAndSend()
                     broadcastIntentSplash()
+                    validateAndSend()
+
                 }
             }
         }
@@ -385,23 +409,27 @@ class ForegroundService : Service() {
                 samples,
                 true,
                 true,
-                25.0
+                RegistroActivity.TOLERANCE
             )
             if(newPoints.size!= 0)
             {
 
-                if(newPoints[0].index.compareTo(firstIndex!!)>0)
+                if(newPoints[0].index.compareTo(firstIndex!!)>=0)
                 {
                     //Valid, can be send to server
                     sendReg(newPoints[0].point!!, newPoints[0].index, regData.TYPE_CONTRIBUTTION)
+                    firstIndex= newPoints[0].index
                 }
                 else {
-                    if (newPoints[1] != null && newPoints[1].index.compareTo(firstIndex!!) > 0) {
+                    if (newPoints[1] != null && newPoints[1].index.compareTo(firstIndex!!) >= 0) {
                         //Valid, can be send to server
                         sendReg(newPoints[1].point!!, newPoints[1].index, regData.TYPE_CONTRIBUTTION)
+                        firstIndex = newPoints[1].index
+
                     } else {
                         // Not valid, notify the user and then, stop service
                         //validatedDialog(this.ERROR_CODE)
+                        Log.d(firstIndex.toString() +" Comparar con :", newPoints.toString())
                         Log.d("Aqui se muere el servicio", "Muere durante la colaboracion 459")
                         killService()
                     }
@@ -414,7 +442,6 @@ class ForegroundService : Service() {
                 Log.d("Aqui se muere el servicio", "Muere durante la colaboracion 469")
                 killService()
             }
-
         }
         else
         {
@@ -442,12 +469,10 @@ class ForegroundService : Service() {
             }
         })
     }
-
-    fun setUserResponse(userResponse:Boolean)
+    fun setUserResponse(userResponse:Boolean?)
     {
-        this.userResponse = userResponse;
+        this.userResponse = userResponse
     }
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         //do heavy work on a background thread
         //builLocationCallback()
@@ -468,13 +493,14 @@ class ForegroundService : Service() {
             needsValidation = intent?.getBooleanExtra("validation", false)
             if (needsValidation!!) {
                 STATE = stateValidating
+                validated=false
             } else {
                 STATE = stateNone
                 firstIndex = nearPoints!![0].index
                 validated=true
             }
             Handler().postDelayed(Runnable {
-                if (validated == false || userResponse==false) {
+                if (validated == false || userResponse==null) {
                     //Time exceeded
                     Log.d("Time Exceeded", "OnStartComand ")
                     validatedDialog(ERROR_CODE)
@@ -504,7 +530,6 @@ class ForegroundService : Service() {
             /* if(validation)
         validateFirst(point,nearPoints)*/
             startForeground(1, this.notification)
-
         }
         return START_NOT_STICKY
     }
@@ -520,11 +545,11 @@ class ForegroundService : Service() {
             manager!!.createNotificationChannel(serviceChannel)
         }
     }
-     inner class MyBinder : Binder() {
+    inner class MyBinder : Binder() {
         fun getService() : ForegroundService {
-             // Simply return a reference to this instance
-             //of the Service.
-             return this@ForegroundService;
+            // Simply return a reference to this instance
+            //of the Service.
+            return this@ForegroundService;
         }
     }
 

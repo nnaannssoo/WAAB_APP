@@ -24,7 +24,6 @@ class ContributingFragment : Fragment() {
         super.onCreate(savedInstanceState)
         cancel = activity as CancelListener
     }
-
     override fun onStart() {
         super.onStart()
         button_cancel.setOnClickListener {

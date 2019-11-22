@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity(), opcionesSheetEx.BottomListener{
         val ruta16 = Ruta("Ruta 16", sentido = "", id = R.drawable.bus16)
         val ruta17 = Ruta("Ruta 17", sentido = "", id = R.drawable.bus17)
         val rutatg = Ruta("Ruta Transportes de Guadalupe", sentido = "Guadalupe - Zacatecas", id = R.drawable.bustg)
-        val rutatyl = Ruta("Ruta Transportes de Guadalupe", sentido = "Tierra y Libertas", id = R.drawable.bustyl)
+        val rutatyl = Ruta("Ruta Transportes de Guadalupe", sentido = "Tierra y Libertad", id = R.drawable.bustyl)
 
         val listaRutas=listOf(ruta1,ruta1b,ruta2,ruta3,ruta4,ruta5,ruta6,ruta7,ruta8, ruta9, ruta11,ruta11b, ruta13, ruta14,ruta15, ruta16, ruta17, rutatg, rutatyl)
         val adapter= RutasAdapter(mContext= this, listaRutas = listaRutas)

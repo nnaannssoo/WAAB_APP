@@ -13,6 +13,7 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.app.FragmentManager
 import android.support.v7.app.AlertDialog
 import android.util.Log
+import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.Toast
 import com.example.proyecto.MainActivity.Companion.ruta
@@ -62,10 +63,13 @@ class RegistroActivity : AppCompatActivity(), CancelListener
     private var myService : ForegroundService? = null
     private var isBound= false
     private var isRegisterded= false
-    private lateinit var LL: LinearLayout
+    private lateinit var LL: ConstraintLayout
     private var receiver = broadcast()
+    private var answer: Boolean? = null
     val REQUEST_CODE_LOCATION = 1
+    private var fragmentVisible= false
     companion object {
+        const val TOLERANCE = 30.0
         private const val UPDATE_INTERVAL = 600000 // 10 min
         private const val FASTEST_INTERVAL = 10000 // 5 min
         private const val DISPLACEMENT = 10 // 1 km
@@ -88,48 +92,48 @@ class RegistroActivity : AppCompatActivity(), CancelListener
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registro)
-            preferences = getDefaultSharedPreferences(this)
-            mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-            mapFragment.getMapAsync(OnMapReadyCallback {
-                map = it
-                map.uiSettings.isZoomControlsEnabled = true
-                map.uiSettings.isMyLocationButtonEnabled = true
-            })
-            LL = LinearLayoutRegistro
-            fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-            buildLocationRequest(5000, 10000, 10f)
-            buildLocationCallback()
-            checkGpsSetting()
+        preferences = getDefaultSharedPreferences(this)
+        mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+        mapFragment.getMapAsync(OnMapReadyCallback {
+            map = it
+            map.uiSettings.isZoomControlsEnabled = true
+            map.uiSettings.isMyLocationButtonEnabled = true
+        })
+        LL = LinearLayoutRegistro
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        buildLocationRequest(5000, 10000, 10f)
+        buildLocationCallback()
+        checkGpsSetting()
+        StartUpdateLocations()
+        getUbicacion()
+        if (ubicacion != null)
+            StopUpdateLocations()
+        retrofit = Retrofit.Builder()
+            .baseUrl("http://148.204.142.162:3031/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        serviceApi = retrofit.create<ApiService>(ApiService::class.java)
+        btn_actualizar.setOnClickListener {
             StartUpdateLocations()
+            var y = getUbicacion()
+            if (y == null)
+                checkGpsSetting()
+            if (gpsState) {
+                y = getUbicacion()
+            }
+            //locationRequest.setSmallestDisplacement(10.0f)
+            Thread.sleep(1000)
             getUbicacion()
-            if (ubicacion != null)
-                StopUpdateLocations()
-            retrofit = Retrofit.Builder()
-                .baseUrl("http://148.204.142.162:3031/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-            serviceApi = retrofit.create<ApiService>(ApiService::class.java)
-            btn_actualizar.setOnClickListener {
-                StartUpdateLocations()
-                //locationRequest.setSmallestDisplacement(10.0f)
-                Thread.sleep(1000)
-                getUbicacion()
-                StopUpdateLocations()
-            }
-            btn_confirmar.setOnClickListener {
-                //validarRegistro()
-                var y = getUbicacion()
-                if (y == null)
-                    checkGpsSetting()
-                if (gpsState) {
-                    y = getUbicacion()
-                }
-                validarRegistro()
-            }
-            btn_regresar.setOnClickListener {
-                //ForegroundService.stopService(this)
-                // 3
-            }
+            StopUpdateLocations()
+        }
+        Log.d("Entra oncreate", isBound.toString())
+        btn_confirmar.setOnClickListener {
+            //validarRegistro()
+            validarRegistro()
+
+        }
+        /*if(isBound)
+            btn_confirmar.isEnabled=false*/
 
     }
 
@@ -148,14 +152,17 @@ class RegistroActivity : AppCompatActivity(), CancelListener
                 ForegroundService.BROADCAST_ACTION_SPLASH
             )
         )
+        registerReceiver(
+            receiver, IntentFilter(
+                ForegroundService.BROADCAST_ACTION_VALIDATING
+            ) )
         isRegisterded=true
     }
     fun unRegisterBroadcast()
     {
-            if (isRegisterded) {
-                Log.d("Si entra", "UNREGISTER BROADCAST")
-                unregisterReceiver(receiver)
-            }
+        if (isRegisterded) {
+            unregisterReceiver(receiver)
+        }
 
     }
     override fun onPause() {
@@ -168,30 +175,30 @@ class RegistroActivity : AppCompatActivity(), CancelListener
     {
         val intent = Intent(this, ForegroundService::class.java)
         bindService(intent, myConnection, Context.BIND_AUTO_CREATE)
-        if(isBound)
-        {
-            Log.d("Servicio enlazado ","BindtoService RegistroActivity")
-        }
-        else
-        {
-            Log.d("Servicio no enlazado","BindtoService RegistroActivity")
-            //ForegroundService.startService(this," ")
-        }
     }
     fun showContributingFragment()
     {
-        LL.visibility=LinearLayout.GONE
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.layoutFragment,ContributingFragment())
-            .commit()
+        if(!fragmentVisible) {
+            LL.visibility = ConstraintLayout.GONE
+            layoutFragment.visibility = ConstraintLayout.VISIBLE
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.layoutFragment, ContributingFragment())
+                .commit()
+            fragmentVisible=true
+        }
     }
     fun dismissContributingFragment()
     {
-        LL.visibility=LinearLayout.VISIBLE
-        layoutFragment.visibility=ConstraintLayout.GONE
-        supportFragmentManager.beginTransaction()
-            .remove(ContributingFragment())
-            .commit()
+        if(fragmentVisible) {
+            Log.d("Dismiis Fragment", "RegistroActivity 200")
+            layoutFragment.visibility = ConstraintLayout.GONE
+            LL.visibility = ConstraintLayout.VISIBLE
+            supportFragmentManager.beginTransaction()
+                .remove(ContributingFragment())
+                .commit()
+            fragmentVisible=false
+        }
+
     }
     fun unBindService()
     {
@@ -199,6 +206,7 @@ class RegistroActivity : AppCompatActivity(), CancelListener
             Log.d("Desenlaza el servicio", "unBindService RegistroActivity")
             unbindService(myConnection)
             isBound = false
+
         }
     }
 
@@ -206,11 +214,12 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         super.onResume()
         registerBroadcast()
         bindStoService()
+        Log.d("Entra onResume", isBound.toString())
         if (getContributingFlagSharedPreferences()) {
             showContributingFragment()
         }
         else {
-            LL.visibility= LinearLayout.VISIBLE
+            dismissContributingFragment()
             checkGpsSetting()
             getUbicacion()
             var hora = LocalDateTime.now()
@@ -220,15 +229,14 @@ class RegistroActivity : AppCompatActivity(), CancelListener
     override fun onStart() {
         super.onStart()
         bindStoService()
-        //registerBroadcast()
+        Log.d("Entra onstart", isBound.toString())
         if (getContributingFlagSharedPreferences()) {
             showContributingFragment()
         }
         else {
-            LL.visibility= LinearLayout.VISIBLE
-            checkGpsSetting()
             getUbicacion()
-            var hora = LocalDateTime.now()
+            dismissContributingFragment()
+            checkGpsSetting()
             StopUpdateLocations()
         }
     }
@@ -239,10 +247,13 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         if (isBound) {
             unbindService(myConnection)
             isBound = false
+            if (answer==null)
+                myService!!.setUserResponse(false)
         }
         //unRegisterBroadcast()
         try {
             StopUpdateLocations()
+
         } catch (c: Exception) {
             Toast.makeText(this, "Algo salió mal ", Toast.LENGTH_SHORT)
         }
@@ -255,9 +266,8 @@ class RegistroActivity : AppCompatActivity(), CancelListener
                 if (grantResults.size > 0) {
                     if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                         getUbicacion()
-                        Toast.makeText(this, "Todo bien con la ubicacion", Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(this, "No jala la ubicacion", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Tenemos problemas con tu ubicación, intenta más tarde", Toast.LENGTH_SHORT).show()
                         finish()
                     }
                 }
@@ -346,13 +356,9 @@ class RegistroActivity : AppCompatActivity(), CancelListener
     private fun buildLocationCallback() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult?) {
-                Toast.makeText(this@RegistroActivity, "Llegó nueva ubicacion", Toast.LENGTH_SHORT)
                 var geocoder = Geocoder(applicationContext, Locale.getDefault())
                 var location = p0!!.locations.get(p0!!.locations.size - 1) //Ultima ubicacion
-                txt_latlng.text =
-                    "Ultima Ubicacion:   " + (location.latitude.toString() + location.longitude.toString())
                 var aux = geocoder.getFromLocation(location.latitude, location.longitude, 2);
-                Toast.makeText(this@RegistroActivity, ubicacion.toString(), Toast.LENGTH_SHORT).show()
                 ubicacion = LatLng(location.latitude, location.longitude)
                 txt_direccion.text = aux[0].getAddressLine(0)
                 if (ubicacion != null) {
@@ -388,11 +394,8 @@ class RegistroActivity : AppCompatActivity(), CancelListener
             if (location != null) {
                 ubicacion = LatLng(location.latitude, location.longitude)
                 var geocoder = Geocoder(applicationContext, Locale.getDefault())
-                txt_latlng.text =
-                    "Ultima Ubicacion:   " + (location.latitude.toString() + location.longitude.toString())
                 var aux = geocoder.getFromLocation(location.latitude, location.longitude, 2)
                 txt_direccion.text = aux[0].getAddressLine(0)
-                Toast.makeText(this@RegistroActivity, ubicacion.toString(), Toast.LENGTH_SHORT).show()
                 ubicacion = LatLng(location.latitude, location.longitude)
                 txt_direccion.text = aux[0].getAddressLine(0)
                 if (ubicacion != null) {
@@ -412,8 +415,8 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         return ubicacion
     }
 
-    fun wantsToConttribute(point : LatLng?, nearPoints: MutableList<Muestra>, needsValidation: Boolean) :Boolean{
-        var answer = false
+    fun wantsToConttribute(point : LatLng?, nearPoints: MutableList<Muestra>, needsValidation: Boolean){
+        answer=null
         //Ask user if wants to contributte
         val builder = AlertDialog.Builder(this@RegistroActivity)
         // Set the alert dialog title
@@ -421,7 +424,8 @@ class RegistroActivity : AppCompatActivity(), CancelListener
 
         // Display a message on alert dialog
         builder.setMessage("¿Te gustaría colaborar durante tu viaje?")
-
+        if(isBound)
+            myService!!.setUserResponse(null)
         // Set a positive button and its click listener on alert dialog
         // Display a neutral button on alert dialog
         builder.setPositiveButton(
@@ -429,47 +433,44 @@ class RegistroActivity : AppCompatActivity(), CancelListener
             DialogInterface.OnClickListener { dialogInterface: DialogInterface, i: Int ->
                 Toast.makeText(
                     applicationContext,
-                    "Gracias por contribuir, no olvides REGISTRAR tu BAJADA",
+                    "Gracias por contribuir, no olvides registrar tu bajada.",
                     Toast.LENGTH_LONG
                 ).show()
                 bindStoService()
                 if(!isBound)
                 {
-                    ForegroundService.startService(this,"Registrando colaboración...",point!!, ArrayList(nearPoints),needsValidation )
+                    ForegroundService.startService(this,"Registrando colaboración...",point!!,ArrayList(nearPoints),needsValidation)
                     bindStoService()
                     //bindStoService()
                 }
                 myService!!.setUserResponse(true)
                 answer=true
+                finish()
             }
         )
         builder.setNegativeButton("NO") { _, _ ->
-            Toast.makeText(applicationContext, "Gracias, hasta la próxima", Toast.LENGTH_SHORT).show()
-            unBindService()
+            Toast.makeText(applicationContext, "Gracias, hasta la próxima", Toast.LENGTH_LONG).show()
+            myService!!.setUserResponse(false)
             answer = false
+            unBindService()
+            finish()
         }
         // Finally, make the alert dialog using builder
         val dialog: AlertDialog = builder.create()
-
         // Display the alert dialog on app interface
         dialog.show()
-        return answer
     }
     private val myConnection = object : ServiceConnection {
-        override fun onServiceConnected(className: ComponentName,
-                                        service: IBinder
-        ) {
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
             val binder = service as ForegroundService.MyBinder
             myService = binder.getService()
             isBound = true
         }
-
         override fun onServiceDisconnected(name: ComponentName) {
             isBound = false
         }
     }
     fun sendReg(point: LatLng, sample: Int, type: String) {
-
         val myFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy/HH:mm:ss")
         var rdata = regData(
             point.latitude.toString() + "," + point.longitude.toString(),
@@ -484,7 +485,6 @@ class RegistroActivity : AppCompatActivity(), CancelListener
                 //t?.printStackTrace()
                 Log.d("MAL SERVIDOR", "Algo salio mal con el servidor:   " + t.toString())
             }
-
             override fun onResponse(call: Call<regData>, response: Response<regData>) {
                 val reg = response?.body()
                 Log.d("TAG", Gson().toJson(reg))
@@ -501,7 +501,7 @@ class RegistroActivity : AppCompatActivity(), CancelListener
                 samples,
                 true,
                 true,
-                25.0
+                TOLERANCE
             )
             //NO AMBIGUICY
             if (nearPoints != null && nearPoints.size == 1) {
@@ -527,12 +527,11 @@ class RegistroActivity : AppCompatActivity(), CancelListener
                 // Set the alert dialog title
                 builder.setTitle("Error")
                 // Display a message on alert dialog
-                builder.setMessage("Parece que tu ubicación no coincide con la ruta seleccionada. Asegurate de estar dentro de la trayectoria del camión de la ruta "+Ruta.getName())
+                builder.setMessage("Parece que tu ubicación no coincide con la ruta seleccionada. Asegurate de estar dentro de la trayectoria del camión de la  "+Ruta.getName())
                 // Display a neutral button on alert dialog
                 builder.setNeutralButton("OK"){_,_ ->
-                    Toast.makeText(applicationContext,"OK.",Toast.LENGTH_SHORT).show()
                 }
-
+                btn_confirmar.isEnabled=true
                 // Finally, make the alert dialog using builder
                 val dialog: AlertDialog = builder.create()
                 // Display the alert dialog on app interface
@@ -546,15 +545,28 @@ class RegistroActivity : AppCompatActivity(), CancelListener
     }
     inner class broadcast : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            Log.d("Si entra aqui", "452 RegistroActivity")
-            Toast.makeText(context, "Llegó el Broadcast", Toast.LENGTH_SHORT).show()
+            Log.d("Si entra aqui", "570 RegistroActivity")
             if(intent!!.action.equals(ForegroundService.BROADCAST_ACTION_UNBIND)){
+                Log.d("UNBIND","RegistroActivy 68")
+                btn_confirmar.isEnabled=true
                 dismissContributingFragment()
                 unBindService()
             }
             else if(intent!!.action.equals(ForegroundService.BROADCAST_ACTION_SPLASH))
             {
+                Log.d("LANZAR SPLASH","RegistroActivy 573")
                 showContributingFragment()
+            }
+            else if(intent!!.action.equals(ForegroundService.BROADCAST_ACTION_VALIDATING))
+            {
+
+                //Toast.makeText(applicationContext,"Si llego al Bloqueo RegistroActivity",Toast.LENGTH_SHORT).show()
+                if(btn_confirmar.isEnabled==true){
+                    Log.d("Si bloquea botones","547 Registro Activity"
+                    )
+                    btn_confirmar.isEnabled = false
+                }
+                //finish()
             }
 
         }

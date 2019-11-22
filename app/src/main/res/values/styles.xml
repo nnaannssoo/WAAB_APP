@@ -9,7 +9,7 @@
         <item name="colorSecondary">@color/secondaryColor</item>
 
     </style>
-    <style name="TextAppearance.AppCompat.Widget.ActionBar.Title." parent="@android:style/TextAppearance">
+    <style name="TEXTTITTLE" parent ="TextAppearance.AppCompat.Widget.ActionBar.Title">
         <item name="android:textSize">30dp</item>
         <item name="android:fontFamily">@font/everything</item>
         <item name="android:textColor">@color/colorAccent</item>
