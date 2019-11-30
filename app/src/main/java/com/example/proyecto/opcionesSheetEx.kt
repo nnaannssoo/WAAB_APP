@@ -35,12 +35,17 @@ class opcionesSheetEx : BottomSheetDialogFragment() {
 
         val intentMap: Intent = Intent(this.context,mapasVista::class.java)
         val intentReg: Intent =  Intent(this.context,RegistroActivity::class.java)
+        val intentTime: Intent =  Intent(this.context,TimeRequestActivity::class.java)
         v.registroTextView.setOnClickListener {
             startActivity(intentReg)
             dismiss()
         }
         v.mapaTextView.setOnClickListener {
             startActivity(intentMap)
+            dismiss()
+        }
+        v.timeTextView.setOnClickListener {
+            startActivity(intentTime)
             dismiss()
         }
         return v

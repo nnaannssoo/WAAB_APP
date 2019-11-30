@@ -1,43 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-		  package="com.example.proyecto">
+        package="com.example.proyecto">
     <!--
          The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
          Google Maps Android API v2, but you must specify either coarse or fine
          location permissions for the 'MyLocation' functionality.
     -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
-			android:allowBackup="true"
-			android:icon="@mipmap/ic_launcher"
-			android:label="@string/app_name"
-			android:networkSecurityConfig="@xml/network_security_config"
-			android:roundIcon="@mipmap/ic_launcher_round"
-			android:supportsRtl="true"
-			android:theme="@style/AppTheme"
-			android:usesCleartextTraffic="true">
-        <activity android:name=".SplashActivity"
-                    android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-                <intent-filter>
-                    <action android:name="android.intent.action.MAIN" />
+            android:allowBackup="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name"
+            android:networkSecurityConfig="@xml/network_security_config"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:supportsRtl="true"
+            android:theme="@style/AppTheme"
+            android:usesCleartextTraffic="true">
+        <activity
+                android:name=".TimeRequestActivity"
+                android:label="@string/title_activity_time_request"
+                android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+                android:name=".SplashActivity"
+                android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
 
-                    <category android:name="android.intent.category.LAUNCHER" />
-                </intent-filter>
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
 
         <uses-library
-				android:name="org.apache.http.legacy"
-				android:required="false"/>
+                android:name="org.apache.http.legacy"
+                android:required="false" />
 
-        <activity android:name=".RegistroActivity">
-        </activity>
+        <activity android:name=".RegistroActivity"></activity>
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -47,41 +51,42 @@
              You can define the keys for the debug and release targets in src/debug/ and src/release/.
         -->
         <meta-data
-				android:name="com.google.android.geo.API_KEY"
-				android:value="@string/google_maps_key"/>
-        <meta-data android:name="preloaded_fonts" android:resource="@array/preloaded_fonts"/>
+                android:name="com.google.android.geo.API_KEY"
+                android:value="@string/google_maps_key" />
+        <meta-data
+                android:name="preloaded_fonts"
+                android:resource="@array/preloaded_fonts" />
 
         <activity
-				android:name=".mapasVista"
-				android:exported="true"
-				android:label="@string/title_activity_mapas_vista">
+                android:name=".mapasVista"
+                android:exported="true"
+                android:label="@string/title_activity_mapas_vista">
             <intent-filter>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity android:name=".MainActivity">
             <intent-filter>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <receiver
-				android:name=".RegistroActivity$broadcast"
-				android:enabled="true">
+                android:name=".RegistroActivity$broadcast"
+                android:enabled="true">
             <intent-filter>
-                <action android:name="com.example.proyecto.UNBIND"/>
+                <action android:name="com.example.proyecto.UNBIND" />
             </intent-filter>
         </receiver>
 
         <service
-				android:name=".ForegroundService"
-				android:enabled="true"
-				android:exported="true"/>
+                android:name=".ForegroundService"
+                android:enabled="true"
+                android:exported="true" />
         <service
                 android:name=".FetchingAddress"
-                android:permission="android.permission.BIND_JOB_SERVICE"
-                android:exported="false" />
-
+                android:exported="false"
+                android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 
 </manifest>

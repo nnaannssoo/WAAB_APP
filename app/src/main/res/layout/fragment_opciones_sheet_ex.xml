@@ -11,6 +11,20 @@
 			android:layout_marginTop="12dp"
 			android:layout_marginBottom="12dp"
 	>
+
+		<TextView
+				android:id="@+id/timeTextView"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_margin="5dp"
+				android:drawableLeft="@drawable/ic_time"
+				android:drawablePadding="30dp"
+				android:drawableTint="#05A053"
+				android:gravity="center_vertical"
+				android:paddingStart="12dp"
+				android:text="Consultar tiempo"
+				android:textSize="20dp" />
+
 		<TextView
 				android:layout_width="match_parent"
 				android:id="@+id/registroTextView"

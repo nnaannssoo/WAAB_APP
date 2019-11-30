@@ -56,7 +56,6 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         ForegroundService.stopService(this)
         finish()
     }
-
     private lateinit var map: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
@@ -75,7 +74,6 @@ class RegistroActivity : AppCompatActivity(), CancelListener
     val REQUEST_CODE_LOCATION = 1
     private var fragmentVisible= false
     var addressOutput = ""
-
     companion object {
         const val TOLERANCE = 30.0
         private const val UPDATE_INTERVAL = 600000 // 10 min
@@ -97,7 +95,6 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         }
     }
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registro)
         preferences = getDefaultSharedPreferences(this)
@@ -140,15 +137,11 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         btn_confirmar.setOnClickListener {
             //validarRegistro()
             validarRegistro()
-
         }
         /*if(isBound)
             btn_confirmar.isEnabled=false*/
-
     }
-
-    fun registerBroadcast()
-    {
+    fun registerBroadcast(){
         /*var filter = IntentFilter()
         filter.addAction( ForegroundService.BROADCAST_ACTION_UNBIND)
         filter.addAction( ForegroundService.BROADCAST_ACTION_SPLASH)*/
@@ -168,26 +161,20 @@ class RegistroActivity : AppCompatActivity(), CancelListener
             ) )
         isRegisterded=true
     }
-    fun unRegisterBroadcast()
-    {
+    fun unRegisterBroadcast(){
         if (isRegisterded) {
             unregisterReceiver(receiver)
         }
-
     }
     override fun onPause() {
         super.onPause()
         unRegisterBroadcast()
-
-
     }
-    fun bindStoService()
-    {
+    fun bindStoService(){
         val intent = Intent(this, ForegroundService::class.java)
         bindService(intent, myConnection, Context.BIND_AUTO_CREATE)
     }
-    fun showContributingFragment()
-    {
+    fun showContributingFragment(){
         if(!fragmentVisible) {
             LL.visibility = ConstraintLayout.GONE
             layoutFragment.visibility = ConstraintLayout.VISIBLE
@@ -197,8 +184,7 @@ class RegistroActivity : AppCompatActivity(), CancelListener
             fragmentVisible=true
         }
     }
-    fun dismissContributingFragment()
-    {
+    fun dismissContributingFragment(){
         if(fragmentVisible) {
             Log.d("Dismiis Fragment", "RegistroActivity 200")
             layoutFragment.visibility = ConstraintLayout.GONE
@@ -208,18 +194,14 @@ class RegistroActivity : AppCompatActivity(), CancelListener
                 .commit()
             fragmentVisible=false
         }
-
     }
-    fun unBindService()
-    {
+    fun unBindService(){
         if(isBound) {
             Log.d("Desenlaza el servicio", "unBindService RegistroActivity")
             unbindService(myConnection)
             isBound = false
-
         }
     }
-
     override fun onResume() {
         super.onResume()
         registerBroadcast()
@@ -250,8 +232,6 @@ class RegistroActivity : AppCompatActivity(), CancelListener
             StopUpdateLocations()
         }
     }
-
-
     override fun onStop() {
         super.onStop()
         if (isBound) {
@@ -263,12 +243,10 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         //unRegisterBroadcast()
         try {
             StopUpdateLocations()
-
         } catch (c: Exception) {
             Toast.makeText(this, "Algo salió mal ", Toast.LENGTH_SHORT)
         }
     }
-
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
@@ -313,7 +291,6 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         }
         return gpsState
     }
-
     private fun loadSamples(nameFile: String): ArrayList<LatLng> {
         var inputStreamReader = InputStreamReader(assets.open(nameFile))
         var bufferedReader: BufferedReader = BufferedReader(inputStreamReader)
@@ -347,7 +324,6 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         }
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
     }
-
     private fun StopUpdateLocations() {
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -360,7 +336,6 @@ class RegistroActivity : AppCompatActivity(), CancelListener
                 REQUEST_CODE_LOCATION
             )
         }
-
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
     private fun buildLocationCallback() {
@@ -371,8 +346,6 @@ class RegistroActivity : AppCompatActivity(), CancelListener
                    /* map.clear()
                     map.addMarker(MarkerOptions().position(ubicacion!!))
                     map.animateCamera(CameraUpdateFactory.newLatLngZoom(ubicacion!!, 18f))*/
-
-
             }
         }
     }
@@ -414,14 +387,12 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         Log.d("Ubicacion  @getUbicacion RegistroActivity", ubicacion.toString())
         return ubicacion
     }
-
     fun wantsToConttribute(point : LatLng?, nearPoints: MutableList<Muestra>, needsValidation: Boolean){
         answer=null
         //Ask user if wants to contributte
         val builder = AlertDialog.Builder(this@RegistroActivity)
         // Set the alert dialog title
         builder.setTitle("SIGUE AYUDANDO... We All Are Bus")
-
         // Display a message on alert dialog
         builder.setMessage("¿Te gustaría colaborar durante tu viaje?")
         if(isBound)
@@ -544,7 +515,6 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         }
     }
     private fun startIntentService(location :Location) {
-
         val intent = Intent(this, FetchingAddress::class.java).apply {
             putExtra(Constants.RECEIVER, mResultReceiver)
             putExtra(Constants.LOCATION_DATA_EXTRA, location)
@@ -552,23 +522,18 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         FetchingAddress.enqueueWork(this,intent)
     }
     internal inner class AddressResultReceiver(handler: Handler) : ResultReceiver(handler) {
-
         override fun onReceiveResult(resultCode: Int, resultData: Bundle?){
-
             // Display the address string
             // or an error message sent from the intent service.
              var addressOutput = resultData?.getString(Constants.RESULT_DATA_KEY) ?: ""
              Log.d("Direccion",addressOutput)
             if(addressOutput!="") {
                 var address = addressOutput.split(",")
-
-                var filteredAddress = "Calle: "+ address.get(0) +"\n"+ "Colonia: "+ address.get(2)+"\n"+addressOutput.
+                var filteredAddress = "Calle: "+ address.get(0) +"\n"+ "Colonia: "+ address.get(2)+"\n"+address.get(3)
                 displayAddressOutput(filteredAddress)
             }
-
         }
     }
-
     private fun displayAddressOutput(addressText: String) {
         runOnUiThread { txt_direccion.setText(addressText) }
     }
@@ -588,7 +553,6 @@ class RegistroActivity : AppCompatActivity(), CancelListener
             }
             else if(intent!!.action.equals(ForegroundService.BROADCAST_ACTION_VALIDATING))
             {
-
                 //Toast.makeText(applicationContext,"Si llego al Bloqueo RegistroActivity",Toast.LENGTH_SHORT).show()
                 if(btn_confirmar.isEnabled==true){
                     Log.d("Si bloquea botones","547 Registro Activity"
@@ -597,8 +561,6 @@ class RegistroActivity : AppCompatActivity(), CancelListener
                 }
                 //finish()
             }
-
         }
     }
-
 }

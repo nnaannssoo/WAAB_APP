@@ -66,7 +66,6 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
         this.ruta = MainActivity.ruta
-        Toast.makeText(this, "Seleccionaste ruta : " + ruta.toString(), Toast.LENGTH_SHORT).show()
 
     }
     private fun agregarMarcador(coordenada: LatLng) {
