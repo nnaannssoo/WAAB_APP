@@ -12,18 +12,17 @@
             android:id="@+id/txt_registro"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="582dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="32dp"
             android:fontFamily="@font/raleway_bold"
             android:text="@string/RequestLocation"
             android:textAlignment="center"
             android:textColor="#19607E"
             android:textSize="24sp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
     <fragment
             android:id="@+id/mapTime"
@@ -33,42 +32,112 @@
             android:layout_marginStart="16dp"
             android:layout_marginTop="24dp"
             android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            app:layout_constraintBottom_toTopOf="@+id/firstFragment"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/txt_registro" />
 
-    <fragment
-            android:id="@+id/firstResponse"
-            android:name="com.example.proyecto.TimeResponseFragment"
-            android:layout_width="0dp"
+    <android.support.constraint.ConstraintLayout
+            android:id="@+id/firstFragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="42dp"
+            android:layout_marginEnd="16dp"
+            android:visibility="invisible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/mapTime"
+            tools:visibility="invisible">
+
+        <TextView
+                android:id="@+id/FirstMessage"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/raleway_medium"
+                android:text="Message"
+                android:textSize="14sp"
+                app:layout_constraintBottom_toTopOf="@+id/FirstTime"
+                app:layout_constraintEnd_toEndOf="@+id/FirstTime"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+                android:id="@+id/FirstTime"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:text="Time"
+                android:textColor="#E91E63"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/FirstMessage"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+                android:id="@+id/firstDirection"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Direction"
+                android:textColor="#E91E63"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/FirstTime" />
+
+    </android.support.constraint.ConstraintLayout>
+
+    <android.support.constraint.ConstraintLayout
+            android:id="@+id/secondFragment"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="32dp"
             android:layout_marginEnd="16dp"
-            android:layout_marginBottom="32dp"
-            android:layout_weight="1"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:visibility="invisible"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/secondResponse"
-            app:layout_constraintVertical_bias="0.204"
-            tools:layout="@layout/fragment_time_response" />
+            app:layout_constraintTop_toBottomOf="@+id/firstFragment"
+            tools:visibility="invisible">
 
-    <fragment
-            android:id="@+id/secondResponse"
-            android:name="com.example.proyecto.TimeResponseFragment"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="64dp"
-            android:layout_marginEnd="16dp"
-            android:layout_weight="2"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/mapTime"
-            tools:layout="@layout/fragment_time_response" />
+        <TextView
+                android:id="@+id/SecondMessage"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Message"
+                app:layout_constraintBottom_toTopOf="@+id/secondTime"
+                app:layout_constraintEnd_toEndOf="@+id/secondTime"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+                android:id="@+id/secondTime"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:text="Time"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/SecondMessage"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+                android:id="@+id/secondDirection"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Direction"
+                android:textColor="#E91E63"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/secondTime" />
+    </android.support.constraint.ConstraintLayout>
 
 </android.support.constraint.ConstraintLayout>

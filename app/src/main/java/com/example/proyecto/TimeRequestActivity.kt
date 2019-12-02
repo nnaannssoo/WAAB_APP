@@ -1,14 +1,25 @@
 package com.example.proyecto
 
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.location.Address
+import android.location.Location
+import android.location.LocationManager
 import android.os.Bundle
+import android.os.Handler
 import android.os.Looper
+import android.os.ResultReceiver
+import android.support.constraint.ConstraintLayout
+import android.support.constraint.solver.widgets.ConstraintAnchor
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
+import android.support.v4.app.Fragment
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.widget.TextView
+import com.example.proyecto.Ruta.Companion.getNameFile
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -17,9 +28,9 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
-import com.google.gson.Gson
 import com.google.maps.android.PolyUtil
 import kotlinx.android.synthetic.main.activity_time_request.*
+import kotlinx.android.synthetic.main.content_time_request.*
 import okhttp3.OkHttpClient
 import retrofit2.Call
 import retrofit2.Callback
@@ -31,6 +42,7 @@ import java.io.InputStreamReader
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
+import com.google.gson.Gson
 
 class TimeRequestActivity : AppCompatActivity() {
     lateinit var mapFragment: SupportMapFragment
@@ -43,7 +55,11 @@ class TimeRequestActivity : AppCompatActivity() {
     private lateinit var serviceApi: ApiService
     lateinit var retrofit: Retrofit
     private val REQUEST_CODE_LOCATION = 1
-
+    private var amb = false
+    private var countresp = 0
+    private var countAddress = 0
+    private lateinit var samples : ArrayList<LatLng>
+    private lateinit var mResultReceiver: AddressResultReceiver
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_time_request)
@@ -52,6 +68,8 @@ class TimeRequestActivity : AppCompatActivity() {
         buildLocationCallback()
         buildLocationRequest(5000,2000,10.0f)
         StartUpdateLocations()
+        var handler= Handler()
+        mResultReceiver= AddressResultReceiver(handler)
         var client = OkHttpClient.Builder()
             client.connectTimeout(10, TimeUnit.SECONDS)
             client.readTimeout(10,TimeUnit.SECONDS)
@@ -143,8 +161,9 @@ class TimeRequestActivity : AppCompatActivity() {
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
     }
     public fun get_index(){
-        if(ubicacion!=null) {
-            var samples = loadSamples(Ruta.getNameFile())
+        samples = loadSamples(getNameFile())
+        if(ubicacion!=null && samples !=null ) {
+
             var nearPoints = com.example.proyecto.google.PolyUtil.locationIndexOnEdgeOrPathPoint(
                 ubicacion,
                 samples,
@@ -155,11 +174,21 @@ class TimeRequestActivity : AppCompatActivity() {
             //NO AMBIGUICY
             if (nearPoints != null && nearPoints.size == 1) {
                 //make HTTP REQUEST
+                amb=false
+                countresp=0
                 getTime(ubicacion,nearPoints.get(0).index)
+                Log.d("Index: ", nearPoints.get(0).index.toString())
             }
             else if(nearPoints.size>1)
             {
                 //make HTTP REQUEST
+                amb=true
+                countresp=0
+                countAddress=0
+                getTime(ubicacion,nearPoints.get(0).index)
+                Log.d("Index1: ", nearPoints.get(0).index.toString())
+                getTime(ubicacion,nearPoints.get(1).index)
+                Log.d("Index2: ", nearPoints.get(1).index.toString())
             }
             else
             {
@@ -210,6 +239,36 @@ class TimeRequestActivity : AppCompatActivity() {
             }
         }
         return RegistroActivity.gpsState
+    }
+    private fun startIntentService(location : Location) {
+        val intent = Intent(this, FetchingAddress::class.java).apply {
+            putExtra(Constants.RECEIVER, mResultReceiver)
+            putExtra(Constants.LOCATION_DATA_EXTRA, location)
+        }
+        FetchingAddress.enqueueWork(this,intent)
+    }
+    internal inner class AddressResultReceiver(handler: Handler) : ResultReceiver(handler) {
+        override fun onReceiveResult(resultCode: Int, resultData: Bundle?){
+            // Display the address string
+            // or an error message sent from the intent service.
+            var addressOutput = resultData?.getParcelable(Constants.RESULT_DATA_KEY) ?: Address(null)
+
+            if(addressOutput.locale!=null) {
+                var filteredAddress = "Con dirección a colonia: "+ addressOutput.subLocality
+                if(countAddress==0) {
+                    displayAddressOutput(filteredAddress, firstDirection)
+                    countAddress+=1
+                }
+                else
+                {
+                    displayAddressOutput(filteredAddress, secondDirection)
+                }
+            }
+            }
+
+    }
+    private fun displayAddressOutput(addressText: String, txtV : TextView) {
+        runOnUiThread { txtV.setText(addressText) }
     }
     private fun agregarmarcadores(marcadores: ArrayList<LatLng>, icono: Int) {
         var icon = (BitmapDescriptorFactory.fromBitmap(
@@ -382,7 +441,44 @@ class TimeRequestActivity : AppCompatActivity() {
             override fun onResponse(call: Call<timeResponse>, response: Response<timeResponse>) {
                 val reg = response?.body()
                 Log.d("Respuesta", Gson().toJson(reg))
+                printTimeResponse(reg!!)
+                var location = Location(LocationManager.GPS_PROVIDER).apply {
+                    latitude = samples.get(originSample+10).latitude
+                    longitude = samples.get(originSample+10).longitude
+                }
+                startIntentService(location)
             }
         })
+    }
+    fun setTRFVisible(constraintFragment: ConstraintLayout, boolean: Boolean)
+    {
+        if(boolean)
+            constraintFragment.visibility = ConstraintLayout.VISIBLE
+        else
+            constraintFragment.visibility = ConstraintLayout.INVISIBLE
+    }
+    public fun printTimeResponse(response: timeResponse){
+        if (!amb) {
+            //imprimir en primer renglon
+            Log.d("Respuesta1:", response.message.toString())
+            //changeContent(firstResponse, response.message, (response.timeEstimation as Int).toString())
+            setTRFVisible(firstFragment,true)
+            FirstMessage.setText(response.message.toString())
+            FirstTime.setText(response.timeEstimation.toString())
+        }
+        else{
+            //imprimir en segundo renglon
+            if(countresp==0){
+                setTRFVisible(firstFragment,true)
+                FirstMessage.setText(response.message.toString())
+                FirstTime.setText(response.timeEstimation.toString())
+                countresp+=1
+            }
+            else{
+                setTRFVisible(secondFragment,true)
+                SecondMessage.setText(response.message.toString())
+                secondTime.setText(response.timeEstimation.toString())
+            }
+        }
     }
 }

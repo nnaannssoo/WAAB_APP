@@ -21,18 +21,25 @@
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintVertical_bias="1.0">
+
         <TextView
+                android:id="@+id/txt_registro"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content" android:id="@+id/txt_registro"
-                android:text="@string/CabeceraRegistro" android:textColor="#19607E" android:textSize="24sp"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                app:layout_constraintStart_toStartOf="parent"
-                android:layout_marginEnd="16dp" app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                android:textAlignment="center" android:fontFamily="@font/raleway_bold"
+                android:layout_marginTop="32dp"
+                android:layout_marginEnd="16dp"
                 android:layout_marginBottom="115dp"
-                app:layout_constraintBottom_toTopOf="@+id/map" android:layout_marginTop="24dp"
-                app:layout_constraintTop_toTopOf="parent"/>
+                android:fontFamily="@font/raleway_bold"
+                android:text="@string/CabeceraRegistro"
+                android:textAlignment="center"
+                android:textColor="#19607E"
+                android:textSize="24sp"
+                app:layout_constraintBottom_toTopOf="@+id/map"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
                 android:id="@+id/txt_direccion"

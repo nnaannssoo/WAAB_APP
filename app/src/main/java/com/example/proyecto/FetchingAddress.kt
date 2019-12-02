@@ -1,6 +1,5 @@
 package com.example.proyecto
 
-import android.app.IntentService
 import android.content.Context
 import android.content.Intent
 import android.location.Address
@@ -53,20 +52,25 @@ class FetchingAddress : JobIntentService() {
                 errorMessage = getString(R.string.NoAddresFound)
                 Log.e("No address found", errorMessage)
             }
-            deliverResultToReceiver(Constants.FAILURE_RESULT, errorMessage)
+            deliverResultToReceiver(Constants.FAILURE_RESULT, Address(null))
         } else {
             val address = addresses[0]
             // Fetch the address lines using getAddressLine,
             // join them, and send them to the thread.
+
+            Log.d("COLONIA",address.subLocality)
+            Log.d("Address",address.toString())
             val addressFragments = with(address) {
                 (0..maxAddressLineIndex).map { getAddressLine(it) }
             }
-            deliverResultToReceiver(Constants.SUCCESS_RESULT,
-                addressFragments.joinToString(separator = "\n"))
+            //addressFragments.joinToString(separator = "\n"))
+            deliverResultToReceiver(Constants.SUCCESS_RESULT,address)
+
         }
     }
-    private fun deliverResultToReceiver(resultCode: Int, message: String) {
-        val bundle = Bundle().apply { putString(Constants.RESULT_DATA_KEY, message) }
+    private fun deliverResultToReceiver(resultCode: Int, address: Address) {
+        val bundle = Bundle()
+        bundle.putParcelable(Constants.RESULT_DATA_KEY,address)
         receiver?.send(resultCode, bundle)
     }
 

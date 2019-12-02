@@ -525,11 +525,10 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         override fun onReceiveResult(resultCode: Int, resultData: Bundle?){
             // Display the address string
             // or an error message sent from the intent service.
-             var addressOutput = resultData?.getString(Constants.RESULT_DATA_KEY) ?: ""
-             Log.d("Direccion",addressOutput)
-            if(addressOutput!="") {
-                var address = addressOutput.split(",")
-                var filteredAddress = "Calle: "+ address.get(0) +"\n"+ "Colonia: "+ address.get(2)+"\n"+address.get(3)
+             var addressOutput = resultData?.getParcelable(Constants.RESULT_DATA_KEY) ?: Address(null)
+
+            if(addressOutput.locale!=null) {
+                var filteredAddress = "Calle: "+ addressOutput.thoroughfare + " "+addressOutput.featureName +"\n"+ "Colonia: "+ addressOutput.subLocality+"\n"+addressOutput.locality
                 displayAddressOutput(filteredAddress)
             }
         }

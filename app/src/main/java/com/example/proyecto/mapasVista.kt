@@ -3,38 +3,26 @@ package com.example.proyecto
 import android.animation.Animator
 import android.animation.ValueAnimator
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.location.Location
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
+import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.view.View
 import android.view.animation.LinearInterpolator
-import android.widget.Toast
-import com.example.proyecto.ImageUtil.*
-import com.example.proyecto.Ruta.Companion.ruta1
-import com.example.proyecto.Ruta.Companion.ruta5
-import com.example.proyecto.Ruta.Companion.ruta7
-import com.example.proyecto.google.MathUtil
-import com.example.proyecto.mapasVista.Companion.backGroungPoly
-import com.example.proyecto.mapasVista.Companion.foreGroungPoly
-import com.google.android.gms.common.internal.ResourceUtils
+import com.example.proyecto.ImageUtil.getBitmapFromVectorDrawable
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
-import com.google.android.gms.maps.model.JointType.ROUND
 import com.google.maps.android.PolyUtil
 import com.google.maps.android.SphericalUtil
-import kotlinx.android.synthetic.main.fragment_item_list_dialog.*
-import kotlinx.android.synthetic.main.fragment_item_list_dialog_item.*
-import java.io.*
-import java.lang.Exception
-import java.sql.Array
+import kotlinx.android.synthetic.main.activity_mapas_vista.*
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 
 class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener  {
@@ -134,75 +122,16 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
 
     private fun agregarPolilinea(poliliniea: String) {
         backGroungPoly = PolyUtil.decode(poliliniea)
-        mMap.addPolyline(
-            PolylineOptions().addAll(backGroungPoly)
-                .width(15f)
-                .color(Color.rgb(150, 207, 169 ))
-                .startCap(SquareCap())
-                .endCap(SquareCap())
-                .jointType(ROUND)
-
-        )
-        mMap.addPolyline(
-            PolylineOptions().addAll(backGroungPoly)
-                .width(10f)
-                .color(Color.rgb(194, 248, 229))
-                .startCap(SquareCap())
-                .endCap(SquareCap())
-                .jointType(ROUND)
-        )
-        //animatePolyLine()
-
-    }
-
-    private fun animatePolyLine() {
-        val animator = ValueAnimator.ofInt(0, 100)
-        animator.duration = 5000
-        animator.interpolator = LinearInterpolator()
-        animator.addUpdateListener { animator1 ->
-
-            val latLngList = backGroungPoly
-            val initialPointSize = latLngList.size
-            val animatedValue = animator1.animatedValue as Int
-            val newPoints = animatedValue * backGroungPoly.size / 100
-
-            if (initialPointSize < newPoints) {
-                latLngList.union(backGroungPoly.subList(initialPointSize, newPoints))
-                backGroungPoly=latLngList
-            }
+        MapAnimator.getInstance().animateRoute(mMap, backGroungPoly)
+        var builder = LatLngBounds.Builder()
+        for (LatLng in backGroungPoly){
+            builder.include(LatLng)
         }
-
-        animator.addListener(object : Animator.AnimatorListener {
-            override fun onAnimationStart(animation: Animator) {
-            Log.d("Mensaje","Si entra a la animacioon")
-            }
-
-            override fun onAnimationEnd(animation: Animator) {
-                // 4
-                val blackLatLng =  backGroungPoly
-                val greyLatLng = foreGroungPoly
-
-                greyLatLng.toMutableList().clear()
-
-                greyLatLng.toMutableList().addAll(blackLatLng)
-                blackLatLng.toMutableList().clear()
-
-
-                backGroungPoly=blackLatLng
-                foreGroungPoly=greyLatLng
-
-                PolylineOptions().addAll(backGroungPoly).zIndex(2f)
-
-                animator.start()
-            }
-
-            override fun onAnimationCancel(animation: Animator) {}
-
-            override fun onAnimationRepeat(animation: Animator) {}
-        })
-
-
-            }
+        var bounds = builder.build()
+        var padding = 0 // padding around start and end marker
+        var cu = CameraUpdateFactory.newLatLngBounds(bounds, padding)
+        mMap.moveCamera(cu)
+    }
 
     private fun loadSamples(nameFile: String): ArrayList<LatLng>
     {
@@ -238,36 +167,35 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
                 getSupportActionBar()!!.setTitle(R.string.r1)
                 agregarPolilinea(Ruta.ruta1.polilinea)
                 agregarmarcadores(Paradas.getR1(), R.drawable.ic_mr1)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR1().get(0), 13f))
-
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR1().get(0), 13f))
             }
             1->
             {
                 //RUTA 1 Horario
                 getSupportActionBar()!!.setTitle(R.string.r1)
                 agregarPolilinea(Ruta.ruta1Horario.polilinea)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR1().get(0), 13f))
                 agregarmarcadores(Paradas.getR1(), R.drawable.ic_mr1)
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR1().get(0), 13f))
             }
             2->
             {
                 getSupportActionBar()!!.setTitle(R.string.r2)
                 agregarPolilinea(Ruta.ruta2.polilinea)
                 agregarmarcadores(Paradas.getR2(), R.drawable.ic_mr2)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR2().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR2().get(0), 13f))
             }
             3->
             {
                 getSupportActionBar()!!.setTitle(R.string.r3)
                 agregarPolilinea(Ruta.ruta3.polilinea)
                 agregarmarcadores(Paradas.getR3(), R.drawable.ic_mr3)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR3().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR3().get(0), 13f))
             }
             4 -> {
                 getSupportActionBar()!!.setTitle(R.string.r4)
                 agregarPolilinea(Ruta.ruta4.polilinea)
                 agregarmarcadores(Paradas.getR4(), R.drawable.ic_mr4)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR4().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR4().get(0), 13f))
 
             }
             5->
@@ -275,49 +203,48 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
                 getSupportActionBar()!!.setTitle(R.string.r5)
                 agregarPolilinea(Ruta.ruta5.polilinea)
                 agregarmarcadores(Paradas.getR5(),R.drawable.ic_mr5)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR5().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR5().get(0), 13f))
             }
             6 -> {
                 //RUTA 7
                 getSupportActionBar()!!.setTitle(R.string.r6)
                 agregarPolilinea(Ruta.ruta6.polilinea)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR6().get(0), 13f))
                 agregarmarcadores(Paradas.getR6(), R.drawable.ic_mr6)
-
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR6().get(0), 13f))
             }
             7->
             {
                 getSupportActionBar()!!.setTitle(R.string.r7)
                 agregarPolilinea(Ruta.ruta7.polilinea)
                 agregarmarcadores(Paradas.getR7(), R.drawable.ic_mr7)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR7().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR7().get(0), 13f))
             }
             8 -> {
                 getSupportActionBar()!!.setTitle(R.string.r8)
                 agregarPolilinea(Ruta.ruta8.polilinea)
                 agregarmarcadores(Paradas.getR8(), R.drawable.ic_mr8)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR8().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR8().get(0), 13f))
             }
             9->
             {
                 getSupportActionBar()!!.setTitle(R.string.r9)
                 agregarPolilinea(Ruta.ruta9.polilinea)
                 agregarmarcadores(Paradas.getR9(), R.drawable.ic_mr9)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR9().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR9().get(0), 13f))
             }
             10->
             {
                 getSupportActionBar()!!.setTitle(R.string.r11)
                 agregarPolilinea(Ruta.ruta11.polilinea)
                 agregarmarcadores(Paradas.getR11(), R.drawable.ic_mr11)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR11().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR11().get(0), 13f))
             }
             11 -> {
                 //RUTA 11B
                 getSupportActionBar()!!.setTitle(R.string.r11)
                 agregarPolilinea(Ruta.ruta11_b.polilinea)
                 agregarmarcadores(Paradas.getR11(), R.drawable.ic_mr11)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR11().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR11().get(0), 13f))
 
             }
             12->
@@ -325,49 +252,49 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
                 getSupportActionBar()!!.setTitle(R.string.r13)
                 agregarPolilinea(Ruta.ruta13.polilinea)
                 agregarmarcadores(Paradas.getR13(), R.drawable.ic_mr13)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR13().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR13().get(0), 13f))
             }
             13->
             {
                 getSupportActionBar()!!.setTitle(R.string.r14)
                 agregarPolilinea(Ruta.ruta14.polilinea)
                 agregarmarcadores(Paradas.getR14(), R.drawable.ic_mr14)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR14().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR14().get(0), 13f))
             }
             14->
             {
                 getSupportActionBar()!!.setTitle(R.string.r15)
                 agregarPolilinea(Ruta.ruta15.polilinea)
                 agregarmarcadores(Paradas.getR15(), R.drawable.ic_mr15)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR15().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR15().get(0), 13f))
             }
             15->
             {
                 getSupportActionBar()!!.setTitle(R.string.r16)
                 agregarPolilinea(Ruta.ruta16.polilinea)
                 agregarmarcadores(Paradas.getR16(), R.drawable.ic_mr16)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR16().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR16().get(0), 13f))
             }
             16->
             {
                 getSupportActionBar()!!.setTitle(R.string.r17)
                 agregarPolilinea(Ruta.ruta17.polilinea)
                 agregarmarcadores(Paradas.getR13(), R.drawable.ic_mr17)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR17().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getR17().get(0), 13f))
             }
             17->
             {
                 getSupportActionBar()!!.setTitle(R.string.rtdg)
                 agregarPolilinea(Ruta.rutaTyL.polilinea)
                 agregarmarcadores(Paradas.getRTyL(), R.drawable.ic_mrtdg)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getRTdG().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getRTdG().get(0), 13f))
             }
             18->
             {
                 getSupportActionBar()!!.setTitle(R.string.rtyl)
                 agregarPolilinea(Ruta.rutaTdG.polilinea)
                 agregarmarcadores(Paradas.getRTdG(), R.drawable.ic_mrtdg)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getRTyL().get(0), 13f))
+                //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Paradas.getRTyL().get(0), 13f))
             }
 
 
