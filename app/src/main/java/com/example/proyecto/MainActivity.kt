@@ -25,9 +25,7 @@ class MainActivity : AppCompatActivity(), opcionesSheetEx.BottomListener{
     companion object
     {
         public var ruta: Int?=null
-        public val Ruta1_0 = Ruta("Ruta 1","Cereso - La escondida",1)
-            const val GPS_REQUEST_CODE = 999
-
+        const val GPS_REQUEST_CODE = 999
     }
 
     private var arrayRutas: Array<String> ?= null

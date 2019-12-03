@@ -1,6 +1,7 @@
 package com.example.proyecto
 import android.content.*
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
@@ -26,8 +27,7 @@ import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.*
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_registro.*
 import retrofit2.Call
@@ -48,14 +48,6 @@ import com.google.maps.android.PolyUtil as PolyUtil1
 private const val LOCATION_PERMISSION_REQUEST_CODE = 1
 class RegistroActivity : AppCompatActivity(), CancelListener
 {
-    override fun onCancelListener() {
-        Log.d("Cancelar","Servicio desde Fragment")
-        if(isBound)
-            myService!!.StopUpdateLocations()
-        unBindService()
-        ForegroundService.stopService(this)
-        finish()
-    }
     private lateinit var map: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
@@ -71,6 +63,7 @@ class RegistroActivity : AppCompatActivity(), CancelListener
     private var receiver = broadcast()
     private lateinit var mResultReceiver: AddressResultReceiver
     private var answer: Boolean? = null
+    private var markerLocation : Marker? = null
     val REQUEST_CODE_LOCATION = 1
     private var fragmentVisible= false
     var addressOutput = ""
@@ -103,6 +96,7 @@ class RegistroActivity : AppCompatActivity(), CancelListener
             map = it
             map.uiSettings.isZoomControlsEnabled = true
             map.uiSettings.isMyLocationButtonEnabled = true
+            cargarTrayectoria(MainActivity.ruta!!)
         })
         LL = LinearLayoutRegistro
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -140,6 +134,14 @@ class RegistroActivity : AppCompatActivity(), CancelListener
         }
         /*if(isBound)
             btn_confirmar.isEnabled=false*/
+    }
+    override fun onCancelListener() {
+        Log.d("Cancelar","Servicio desde Fragment")
+        if(isBound)
+            myService!!.StopUpdateLocations()
+        unBindService()
+        ForegroundService.stopService(this)
+        finish()
     }
     fun registerBroadcast(){
         /*var filter = IntentFilter()
@@ -378,9 +380,11 @@ class RegistroActivity : AppCompatActivity(), CancelListener
                 ubicacion = LatLng(location.latitude, location.longitude)
                 //txt_direccion.text = aux[0].getAddressLine(0)
                     //ubicacion= LatLng(22.7675,-102.572)
-                    map.clear()
-                    map.addMarker(MarkerOptions().position(ubicacion!!))
-                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(ubicacion!!, 18f))
+                if(markerLocation!=null)
+                    markerLocation!!.position=ubicacion
+                else
+                    markerLocation= map.addMarker(MarkerOptions().position(ubicacion!!).draggable(true))
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicacion!!, 18f))
             }
             // StopUpdateLocations()
         }
@@ -520,6 +524,124 @@ class RegistroActivity : AppCompatActivity(), CancelListener
             putExtra(Constants.LOCATION_DATA_EXTRA, location)
         }
         FetchingAddress.enqueueWork(this,intent)
+    }
+    private fun cargarTrayectoria(ruta: Int) {
+        Log.d("SI","Entra a cargar trayectoria")
+        when (ruta) {
+            0 -> {
+                //RUTA 1 Antihorario
+                getSupportActionBar()!!.setTitle(R.string.r1)
+                agregarPolilinea(Ruta.ruta1.polilinea)
+            }
+            1->
+            {
+                //RUTA 1 Horario
+                getSupportActionBar()!!.setTitle(R.string.r1)
+                agregarPolilinea(Ruta.ruta1Horario.polilinea)
+            }
+            2->
+            {
+                getSupportActionBar()!!.setTitle(R.string.r2)
+                agregarPolilinea(Ruta.ruta2.polilinea)
+            }
+            3->
+            {
+                getSupportActionBar()!!.setTitle(R.string.r3)
+                agregarPolilinea(Ruta.ruta3.polilinea)
+            }
+            4 -> {
+                getSupportActionBar()!!.setTitle(R.string.r4)
+                agregarPolilinea(Ruta.ruta4.polilinea)
+
+            }
+            5->
+            {
+                getSupportActionBar()!!.setTitle(R.string.r5)
+                agregarPolilinea(Ruta.ruta5.polilinea)
+            }
+            6 -> {
+                //RUTA 7
+                getSupportActionBar()!!.setTitle(R.string.r6)
+                agregarPolilinea(Ruta.ruta6.polilinea)
+
+            }
+            7->
+            {
+                getSupportActionBar()!!.setTitle(R.string.r7)
+                agregarPolilinea(Ruta.ruta7.polilinea)
+            }
+            8 -> {
+                getSupportActionBar()!!.setTitle(R.string.r8)
+                agregarPolilinea(Ruta.ruta8.polilinea)
+            }
+            9->
+            {
+                getSupportActionBar()!!.setTitle(R.string.r9)
+                agregarPolilinea(Ruta.ruta9.polilinea)
+            }
+            10->
+            {
+                getSupportActionBar()!!.setTitle(R.string.r11)
+                agregarPolilinea(Ruta.ruta11.polilinea)
+            }
+            11 -> {
+                //RUTA 11B
+                getSupportActionBar()!!.setTitle(R.string.r11)
+                agregarPolilinea(Ruta.ruta11_b.polilinea)
+
+            }
+            12->
+            {
+                getSupportActionBar()!!.setTitle(R.string.r13)
+                agregarPolilinea(Ruta.ruta13.polilinea)
+            }
+            13->
+            {
+                getSupportActionBar()!!.setTitle(R.string.r14)
+                agregarPolilinea(Ruta.ruta14.polilinea)
+            }
+            14->
+            {
+                getSupportActionBar()!!.setTitle(R.string.r15)
+                agregarPolilinea(Ruta.ruta15.polilinea)
+            }
+            15->
+            {
+                getSupportActionBar()!!.setTitle(R.string.r16)
+                agregarPolilinea(Ruta.ruta16.polilinea)
+            }
+            16->
+            {
+                getSupportActionBar()!!.setTitle(R.string.r17)
+                agregarPolilinea(Ruta.ruta17.polilinea)
+            }
+            17->
+            {
+                getSupportActionBar()!!.setTitle(R.string.rtdg)
+                agregarPolilinea(Ruta.rutaTyL.polilinea)
+            }
+            18->
+            {
+                getSupportActionBar()!!.setTitle(R.string.rtyl)
+                agregarPolilinea(Ruta.rutaTdG.polilinea)
+            }
+
+
+
+        }
+
+
+    }
+    private fun agregarPolilinea(polilinea: String) {
+        var backGroungPoly = com.google.maps.android.PolyUtil.decode(polilinea)
+        map.addPolyline(
+            PolylineOptions().addAll(backGroungPoly)
+                .width(15f)
+                .color(Color.LTGRAY)
+                .startCap(SquareCap())
+                .endCap(SquareCap())
+                .jointType(JointType.ROUND)
+        )
     }
     internal inner class AddressResultReceiver(handler: Handler) : ResultReceiver(handler) {
         override fun onReceiveResult(resultCode: Int, resultData: Bundle?){

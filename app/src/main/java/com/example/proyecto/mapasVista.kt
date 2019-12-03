@@ -25,7 +25,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 
 
-class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener  {
+class mapasVista : AppCompatActivity(), GoogleMap.OnMarkerClickListener  {
 
     private lateinit var samples: ArrayList<LatLng>
     private lateinit var ubicacionCliente: FusedLocationProviderClient
@@ -50,11 +50,16 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mapas_vista)
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         this.ruta = MainActivity.ruta
-
+        mapFragment.getMapAsync(OnMapReadyCallback{
+            mMap = it
+            mMap.setOnMarkerClickListener(this)
+            mMap.uiSettings.isZoomControlsEnabled = true
+            ubicacionCliente = LocationServices.getFusedLocationProviderClient(this)
+            revisarPermisosMapa()
+            cargarTrayectoria(this.ruta!!)
+        })
     }
     private fun agregarMarcador(coordenada: LatLng) {
         val marcador = MarkerOptions().position(coordenada)
@@ -69,16 +74,6 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
         mMap.addMarker(marcador)
 
     }
-    override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
-        //
-        mMap.setOnMarkerClickListener(this)
-        mMap.uiSettings.isZoomControlsEnabled = true
-        ubicacionCliente = LocationServices.getFusedLocationProviderClient(this)
-        revisarPermisosMapa()
-        cargarTrayectoria(this.ruta!!)
-    }
-
     private fun agregarmarcadores(marcadores: ArrayList<LatLng>, icono: Int) {
         var icon = (BitmapDescriptorFactory.fromBitmap(getBitmapFromVectorDrawable(getApplicationContext(), icono)))
         for (marcador in marcadores) {
@@ -121,8 +116,7 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
     }
 
     private fun agregarPolilinea(poliliniea: String) {
-        backGroungPoly = PolyUtil.decode(poliliniea)
-        MapAnimator.getInstance().animateRoute(mMap, backGroungPoly)
+        backGroungPoly = PolyUtil.decode(poliliniea)/*
         var builder = LatLngBounds.Builder()
         for (LatLng in backGroungPoly){
             builder.include(LatLng)
@@ -130,7 +124,8 @@ class mapasVista : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerCl
         var bounds = builder.build()
         var padding = 0 // padding around start and end marker
         var cu = CameraUpdateFactory.newLatLngBounds(bounds, padding)
-        mMap.moveCamera(cu)
+        mMap.moveCamera(cu)*/
+        MapAnimator.getInstance().animateRoute(mMap, backGroungPoly)
     }
 
     private fun loadSamples(nameFile: String): ArrayList<LatLng>

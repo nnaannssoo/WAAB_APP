@@ -9,6 +9,6 @@ interface ApiService {
 
     @POST("registry/save/")
     fun saveReg(@Body registro: regData): Call<regData>
-    @GET("registry/test/")
+    @GET("registry/estimation/")
     fun getTime(@Query("date") date: String,@Query("index") index:Int,@Query("destination") destinationPoint:String, @Query("id_route") route: Int ): Call<timeResponse>
 }

@@ -107,14 +107,11 @@ class TimeRequestActivity : AppCompatActivity() {
                 var location = p0!!.locations.get(p0!!.locations.size - 1) //Ultima ubicacion
                 ubicacion = LatLng(location.latitude,location.longitude)
                 if(ubicacion!=null) {
-                    if(markerLocation!=null) {
+                    if(markerLocation!=null)
                         markerLocation!!.position=ubicacion
-                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(ubicacion!!, 18f))
-                    }
-                    else {
+                    else
                         markerLocation= map.addMarker(MarkerOptions().position(ubicacion!!).draggable(true))
-                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(ubicacion!!, 18f))
-                    }
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicacion!!, 18f))
                 }
             }
         }
@@ -270,18 +267,6 @@ class TimeRequestActivity : AppCompatActivity() {
     private fun displayAddressOutput(addressText: String, txtV : TextView) {
         runOnUiThread { txtV.setText(addressText) }
     }
-    private fun agregarmarcadores(marcadores: ArrayList<LatLng>, icono: Int) {
-        var icon = (BitmapDescriptorFactory.fromBitmap(
-            ImageUtil.getBitmapFromVectorDrawable(
-                getApplicationContext(),
-                icono
-            )
-        ))
-        for (marcador in marcadores) {
-
-            map.addMarker(MarkerOptions().position(marcador).icon(icon))
-        }
-    }
     private fun cargarTrayectoria(ruta: Int) {
         Log.d("SI","Entra a cargar trayectoria")
         when (ruta) {
@@ -289,125 +274,100 @@ class TimeRequestActivity : AppCompatActivity() {
                 //RUTA 1 Antihorario
                 getSupportActionBar()!!.setTitle(R.string.r1)
                 agregarPolilinea(Ruta.ruta1.polilinea)
-                agregarmarcadores(Paradas.getR1(), R.drawable.ic_mr1)
-
             }
             1->
             {
                 //RUTA 1 Horario
                 getSupportActionBar()!!.setTitle(R.string.r1)
                 agregarPolilinea(Ruta.ruta1Horario.polilinea)
-                agregarmarcadores(Paradas.getR1(), R.drawable.ic_mr1)
             }
             2->
             {
                 getSupportActionBar()!!.setTitle(R.string.r2)
                 agregarPolilinea(Ruta.ruta2.polilinea)
-                agregarmarcadores(Paradas.getR2(), R.drawable.ic_mr2)
             }
             3->
             {
                 getSupportActionBar()!!.setTitle(R.string.r3)
                 agregarPolilinea(Ruta.ruta3.polilinea)
-                agregarmarcadores(Paradas.getR3(), R.drawable.ic_mr3)
             }
             4 -> {
                 getSupportActionBar()!!.setTitle(R.string.r4)
                 agregarPolilinea(Ruta.ruta4.polilinea)
-                agregarmarcadores(Paradas.getR4(), R.drawable.ic_mr4)
 
             }
             5->
             {
                 getSupportActionBar()!!.setTitle(R.string.r5)
                 agregarPolilinea(Ruta.ruta5.polilinea)
-                agregarmarcadores(Paradas.getR5(),R.drawable.ic_mr5)
             }
             6 -> {
                 //RUTA 7
                 getSupportActionBar()!!.setTitle(R.string.r6)
                 agregarPolilinea(Ruta.ruta6.polilinea)
-                agregarmarcadores(Paradas.getR6(), R.drawable.ic_mr6)
 
             }
             7->
             {
                 getSupportActionBar()!!.setTitle(R.string.r7)
                 agregarPolilinea(Ruta.ruta7.polilinea)
-                agregarmarcadores(Paradas.getR7(), R.drawable.ic_mr7)
             }
             8 -> {
                 getSupportActionBar()!!.setTitle(R.string.r8)
                 agregarPolilinea(Ruta.ruta8.polilinea)
-                agregarmarcadores(Paradas.getR8(), R.drawable.ic_mr8)
             }
             9->
             {
                 getSupportActionBar()!!.setTitle(R.string.r9)
                 agregarPolilinea(Ruta.ruta9.polilinea)
-                agregarmarcadores(Paradas.getR9(), R.drawable.ic_mr9)
             }
             10->
             {
                 getSupportActionBar()!!.setTitle(R.string.r11)
                 agregarPolilinea(Ruta.ruta11.polilinea)
-                agregarmarcadores(Paradas.getR11(), R.drawable.ic_mr11)
             }
             11 -> {
                 //RUTA 11B
                 getSupportActionBar()!!.setTitle(R.string.r11)
                 agregarPolilinea(Ruta.ruta11_b.polilinea)
-                agregarmarcadores(Paradas.getR11(), R.drawable.ic_mr11)
 
             }
             12->
             {
                 getSupportActionBar()!!.setTitle(R.string.r13)
                 agregarPolilinea(Ruta.ruta13.polilinea)
-                agregarmarcadores(Paradas.getR13(), R.drawable.ic_mr13)
             }
             13->
             {
                 getSupportActionBar()!!.setTitle(R.string.r14)
                 agregarPolilinea(Ruta.ruta14.polilinea)
-                agregarmarcadores(Paradas.getR14(), R.drawable.ic_mr14)
             }
             14->
             {
                 getSupportActionBar()!!.setTitle(R.string.r15)
                 agregarPolilinea(Ruta.ruta15.polilinea)
-                agregarmarcadores(Paradas.getR15(), R.drawable.ic_mr15)
             }
             15->
             {
                 getSupportActionBar()!!.setTitle(R.string.r16)
                 agregarPolilinea(Ruta.ruta16.polilinea)
-                agregarmarcadores(Paradas.getR16(), R.drawable.ic_mr16)
             }
             16->
             {
                 getSupportActionBar()!!.setTitle(R.string.r17)
                 agregarPolilinea(Ruta.ruta17.polilinea)
-                agregarmarcadores(Paradas.getR13(), R.drawable.ic_mr17)
             }
             17->
             {
                 getSupportActionBar()!!.setTitle(R.string.rtdg)
                 agregarPolilinea(Ruta.rutaTyL.polilinea)
-                agregarmarcadores(Paradas.getRTyL(), R.drawable.ic_mrtdg)
             }
             18->
             {
                 getSupportActionBar()!!.setTitle(R.string.rtyl)
                 agregarPolilinea(Ruta.rutaTdG.polilinea)
-                agregarmarcadores(Paradas.getRTdG(), R.drawable.ic_mrtdg)
             }
-
-
-
         }
-
-
     }
 
     private fun agregarPolilinea(polilinea: String) {
@@ -419,9 +379,7 @@ class TimeRequestActivity : AppCompatActivity() {
                 .startCap(SquareCap())
                 .endCap(SquareCap())
                 .jointType(JointType.ROUND)
-
         )
-
     }
 
     public fun getTime(destinationPoint: LatLng, originSample: Int) {
