@@ -1,15 +1,11 @@
 package com.example.proyecto
 
-import android.animation.Animator
-import android.animation.ValueAnimator
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.view.View
-import android.view.animation.LinearInterpolator
 import com.example.proyecto.ImageUtil.getBitmapFromVectorDrawable
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -20,7 +16,6 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.PolyUtil
 import com.google.maps.android.SphericalUtil
-import kotlinx.android.synthetic.main.activity_mapas_vista.*
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
@@ -34,6 +29,7 @@ class mapasVista : AppCompatActivity(), GoogleMap.OnMarkerClickListener  {
     lateinit var foreGroungPoly: List<LatLng>
     private var ruta: Int? = null
     private lateinit var mMap: GoogleMap
+    private var ubicacion = LatLng(22.773478, -102.585007)
 
     companion object {
         //PERSMISOS EN TIEMPO DE EJECUCIÓN
@@ -110,21 +106,33 @@ class mapasVista : AppCompatActivity(), GoogleMap.OnMarkerClickListener  {
         ubicacionCliente.lastLocation.addOnSuccessListener(this) { location ->
             if (location != null) {
                 ultimaUbicacion = location // location.latitude, location.longitude
-                // mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(ultimaUbicacion.latitude,ultimaUbicacion.longitude),18f))
             }
         }
     }
 
     private fun agregarPolilinea(poliliniea: String) {
-        backGroungPoly = PolyUtil.decode(poliliniea)/*
+        backGroungPoly = PolyUtil.decode(poliliniea)
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicacion!!, 11.5f))
+
         var builder = LatLngBounds.Builder()
         for (LatLng in backGroungPoly){
             builder.include(LatLng)
         }
         var bounds = builder.build()
-        var padding = 0 // padding around start and end marker
+        var padding = 35 // padding around start and end marker
         var cu = CameraUpdateFactory.newLatLngBounds(bounds, padding)
-        mMap.moveCamera(cu)*/
+
+        //mMap.animateCamera(cu)
+
+        try {
+            mMap.animateCamera(cu)
+        } catch (ise: IllegalStateException) {
+            mMap.setOnMapLoadedCallback {
+                mMap.animateCamera(cu)
+                Log.d("MAP:","zoom to polyline")
+            }
+        }
+
         MapAnimator.getInstance().animateRoute(mMap, backGroungPoly)
     }
 

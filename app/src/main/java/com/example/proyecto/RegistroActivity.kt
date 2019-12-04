@@ -384,7 +384,8 @@ class RegistroActivity : AppCompatActivity(), CancelListener
                     markerLocation!!.position=ubicacion
                 else
                     markerLocation= map.addMarker(MarkerOptions().position(ubicacion!!).draggable(true))
-                map.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicacion!!, 18f))
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicacion!!, 14f))
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicacion!!, 17f))
             }
             // StopUpdateLocations()
         }
